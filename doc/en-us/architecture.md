@@ -6,8 +6,9 @@ MyApps-AI consolidates system-provided on-device text generation and proofreadin
 for MyAnime, MyDay, MyDevice and MyNihongo. MyTranscribe is excluded. MyVidComp
 currently has no corresponding implementation to migrate.
 
-The repository is initialized with contracts and documentation CI only. None of
-the packages below exists yet. No application consumes this repository yet.
+The first implementation is `myapps_ai`: shared prompt runtime, capability-aware
+channel backend and output utilities. Native channels remain application-owned
+during this compatibility step. Platform and UI packages below are not implemented.
 
 ## Package boundaries
 
@@ -16,6 +17,15 @@ the packages below exists yet. No application consumes this repository yet.
 | `myapps_ai` | Capability types, scheduling, lifecycle, cancellation and optional generation/cache orchestration |
 | `myapps_ai_platform` | Flutter native bridge for Android ML Kit GenAI/AICore and Apple Foundation Models |
 | `myapps_ai_ui` | Capability status, downloads, model preferences, diagnostic details and generated-content states |
+
+The compatibility step uses each application's existing channel name. The shared
+default channel is reserved for the future native plugin. `GenAiBackend` retains
+the prompt contract; `CapabilityGenAiBackend` adds independent capability queries,
+downloads and proofreading. The initial runtime schedules prompt requests only.
+The proofreading channel protocol is covered by mock tests; native consolidation
+and MyNihongo's runtime migration remain pending.
+
+See [public API](api.md) for current declarations and behavior.
 
 The runtime uses the platform bridge. The optional UI package uses the runtime
 and MyApps-UI. Keep native AI dependencies out of MyApps-UI's base package.
