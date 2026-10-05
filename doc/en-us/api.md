@@ -1,5 +1,11 @@
 # Public API
 
+`MyAppsAiPreference` constructor/build owns common enablement and model preference
+switches with labels, values and callbacks. `MyAppsAiModelNotes` constructor/build
+owns download/storage explanations and optional diagnostic presentation. Together
+with capability status tiles they support independent-feature settings adapters.
+Builds never query services, download models or persist preferences.
+
 `MyAppsAiCapabilityTile` and its constructor/build render an independently
 reported capability using injected title, status, icon, optional diagnostics and
 action. Build makes no backend calls. Capability adapters own enablement,

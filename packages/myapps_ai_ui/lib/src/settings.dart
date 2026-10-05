@@ -2,6 +2,91 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:myapps_ai/myapps_ai.dart';
 
+/// AI enablement or model-preference control with injected application policy.
+class MyAppsAiPreference extends StatelessWidget {
+  final String title;
+  final String description;
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+  final IconData icon;
+  final bool isThreeLine;
+
+  /// Purpose: Bind a common AI preference without owning stored values.
+  /// Inputs: Labels, value, callback and presentation options.
+  /// Returns: Preference control. Side effects: None.
+  /// Notes: Null callback disables the control.
+  const MyAppsAiPreference({
+    super.key,
+    required this.title,
+    required this.description,
+    required this.value,
+    required this.onChanged,
+    this.icon = Icons.auto_awesome_outlined,
+    this.isThreeLine = false,
+  });
+
+  /// Purpose: Render a common AI switch and explanation.
+  /// Inputs: context. Returns: Switch tile. Side effects: Forwards changes.
+  /// Notes: No service requests during build.
+  @override
+  Widget build(BuildContext context) => SwitchListTile(
+    secondary: Icon(icon),
+    title: Text(title),
+    subtitle: Text(description),
+    value: value,
+    onChanged: onChanged,
+    isThreeLine: isThreeLine,
+  );
+}
+
+/// System model ownership and download explanation with optional diagnostics.
+class MyAppsAiModelNotes extends StatelessWidget {
+  final String downloadNote;
+  final String storageNote;
+  final String? diagnostic;
+
+  /// Purpose: Bind model ownership explanations and optional diagnostic text.
+  /// Inputs: Localized notes and diagnostic. Returns: Notes. Side effects: None.
+  /// Notes: Caller controls diagnostic visibility.
+  const MyAppsAiModelNotes({
+    super.key,
+    required this.downloadNote,
+    required this.storageNote,
+    this.diagnostic,
+  });
+
+  /// Purpose: Render shared model explanation spacing and text styles.
+  /// Inputs: context. Returns: Padded notes. Side effects: None.
+  /// Notes: Describes system-managed models without providing deletion controls.
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final style = theme.textTheme.bodySmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(downloadNote, style: style),
+          const SizedBox(height: 8),
+          Text(storageNote, style: style),
+          if (diagnostic != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              diagnostic!,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 /// Common feature status presentation for capability-specific adapters.
 class MyAppsAiCapabilityTile extends StatelessWidget {
   final String title;
@@ -98,10 +183,9 @@ class MyAppsAiSettings extends StatelessWidget {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SwitchListTile(
-              secondary: const Icon(Icons.auto_awesome_outlined),
-              title: Text(label("aiUseOnDevice")),
-              subtitle: Text(label("aiUseOnDeviceDesc")),
+            MyAppsAiPreference(
+              title: label("aiUseOnDevice"),
+              description: label("aiUseOnDeviceDesc"),
               value: enabled,
               onChanged: onEnabledChanged,
             ),
@@ -137,10 +221,10 @@ class MyAppsAiSettings extends StatelessWidget {
                 },
               ),
               if (isAndroid && report.hasSizeChoice)
-                SwitchListTile(
-                  secondary: const SizedBox(width: 24),
-                  title: Text(label("aiPreferFast")),
-                  subtitle: Text(label("aiPreferFastBody")),
+                MyAppsAiPreference(
+                  icon: Icons.speed_outlined,
+                  title: label("aiPreferFast"),
+                  description: label("aiPreferFastBody"),
                   value: preferFast,
                   onChanged: onPreferFastChanged,
                 ),
