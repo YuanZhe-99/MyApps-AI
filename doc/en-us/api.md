@@ -47,6 +47,13 @@ does not establish whether a system model actually stops immediately.
 
 ## Output utilities
 
+`generateWithFallback` accepts consumer facts, generation and usability callbacks.
+It attempts fallback once after guardrail refusal or an unusable parsed result.
+Other failures propagate. Consumers decide whether fallback differs from primary.
+`AiInsightEntry` and `AiInsightStatus` preserve MyDay/MyDevice's existing cache
+entry fields, UTC timestamps, tolerant parsing and slot grouping. Module maps,
+paths, atomic writes, fingerprints and domain parsers remain consumer-owned.
+
 `parseChoiceReply` returns validated unique candidates and parse validity.
 `stripMarkdown`, `matchesScript` and `cleanSentence` retain the consumers' existing
 cleaning, script ratio and length checks. Domain prompts and parsers stay in apps.

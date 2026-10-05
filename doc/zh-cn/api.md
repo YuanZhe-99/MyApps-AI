@@ -40,5 +40,10 @@ dispose 使结果失效并结束队列中的请求。原生取消仍是尽力而
 
 ## 输出工具
 
+`generateWithFallback` 接受消费者事实、生成与有效性回调，在安全拒答或解析结果
+无效后仅尝试一次备用事实，其他失败继续抛出。消费者决定备用事实是否不同。
+`AiInsightEntry` 和 `AiInsightStatus` 保留 MyDay/MyDevice 既有缓存条目字段、UTC
+时间、容错解析及分组。模块映射、路径、原子写入、指纹和领域解析仍由消费者负责。
+
 `parseChoiceReply` 返回校验后的唯一候选及解析有效性。`stripMarkdown`、matchesScript
 和 `cleanSentence` 保留消费者既有清理、字符比例和长度检查。领域提示词与解析留在应用。
