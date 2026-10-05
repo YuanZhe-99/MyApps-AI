@@ -18,6 +18,11 @@ Android 候选生成使用校验后的行解析，Apple 使用原生约束生成
 
 ## 运行时
 
+`AiExecutionGate` 为按能力适配器提供单请求执行锁。`run` 获取锁前检查开关，向
+操作传入当前代数检查，设置超时，并在取消清理完成后释放占用。`invalidate` 阻止
+过期结果发布，`busy` 和 `generation` 提供占用状态及状态发布标记。消费者提供
+既有失败类型、通知和后端回调。
+
 `OnDeviceAiService` 保留既有 Prompt 接口：enabled、preferFast、report、coreInfo、
 downloadProgress、downloading、busy、pausedUntil、quotaReachedToday 和 canGenerate。
 方法为 setEnabled、setPreferFast、refreshStatus、download、generate、choose、prewarm、

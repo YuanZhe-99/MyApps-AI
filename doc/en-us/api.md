@@ -19,6 +19,13 @@ generation. Callers continue validating choices against their own business rules
 
 ## Runtime
 
+`AiExecutionGate` provides a single-flight lock for feature-specific adapters.
+`run` checks enabled before acquiring the lock, passes a current-generation check
+to the operation, applies a timeout and waits for cancellation cleanup before
+releasing occupancy. `invalidate` prevents obsolete results from publishing;
+`busy` and `generation` expose occupancy and the status publication token.
+Consumers supply their existing failure types, notification and backend callbacks.
+
 `OnDeviceAiService` retains the existing prompt-facing interface: enabled,
 preferFast, report, coreInfo, downloadProgress, downloading, busy, pausedUntil,
 quotaReachedToday and canGenerate. Methods are setEnabled, setPreferFast,
