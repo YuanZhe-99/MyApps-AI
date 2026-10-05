@@ -77,14 +77,13 @@ of generated questions from spaced-repetition scheduling.
   and backup by application module registration.
 - Diagnostics may include statuses and model identifiers, but never prompt contents.
 
-## Migration constraints
+## Consumer and release contracts
 
-Design the initial contract against all four consumers, including MyNihongo's
-independent proofreading capability. Migrate consumers in the order MyDevice,
-MyDay, MyAnime, MyNihongo, using thin application adapters. Native bridge extraction,
-runtime extraction and optional UI/cache extraction each require behavior checks
-before consumer rollout. A migration does not add Apple AI support to MyNihongo.
+All four consumers retain thin application adapters and independent data.
+MyDay/MyDevice share insight orchestration and card presentation. MyAnime shares
+prompt settings but retains classification and recommendation workflows.
+MyNihongo shares native capabilities and execution gates while retaining its
+teaching UI and practice ordering. It remains Android-only for AI.
 
 Publish a tagged shared dependency to Gitea and GitHub before updating consumers.
 Package and third-party license notices must accompany consumer integration.
-Repository initialization alone is not an implementation milestone or release.
