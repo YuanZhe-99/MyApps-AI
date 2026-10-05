@@ -8,7 +8,9 @@ currently has no corresponding implementation to migrate.
 
 The first implementation is `myapps_ai`: shared prompt runtime, capability-aware
 channel backend and output utilities. Native channels remain application-owned
-during this compatibility step. Platform and UI packages below are not implemented.
+during this compatibility step. The platform plugin is now implemented for build
+validation; the UI package is not implemented. Consumer native migration waits
+for the platform build checks.
 
 ## Package boundaries
 
@@ -22,15 +24,24 @@ The compatibility step uses each application's existing channel name. The shared
 default channel is reserved for the future native plugin. `GenAiBackend` retains
 the prompt contract; `CapabilityGenAiBackend` adds independent capability queries,
 downloads and proofreading. The initial runtime schedules prompt requests only.
-The proofreading channel protocol is covered by mock tests; native consolidation
-and MyNihongo's runtime migration remain pending.
+The platform plugin registers the shared channel on Android, iOS and macOS.
+Android supports independent Prompt and Japanese keyboard proofreading; Apple
+supports generation and constrained choices and reports proofreading unsupported.
+MyNihongo's runtime migration remains pending.
 
 See [public API](api.md) for current declarations and behavior.
 
 The runtime uses the platform bridge. The optional UI package uses the runtime
 and MyApps-UI. Keep native AI dependencies out of MyApps-UI's base package.
-Packaging of the Android proofreading dependency will be decided through build
-validation before a platform package is published.
+The initial Android plugin bundles both clients, created lazily. This preserves
+independent capabilities without installing a second handler on the same channel.
+The plugin supplies AICore package visibility and R8 consumer rules. Its minimum
+Android API is 26 and Java target is 17. Native dependencies are pinned to
+genai-prompt 1.0.0-beta4 and genai-proofreading 1.0.0-beta1.
+
+Engine detach closes clients. Cancellation retains the busy slot until the native
+task exits and rejects a result produced after cancellation. Apple keeps isolated
+sessions and Foundation Models weak linking in CocoaPods and SwiftPM packaging.
 
 ## Application ownership
 

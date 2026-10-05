@@ -34,3 +34,36 @@ jobs:
       - run: dart format --set-exit-if-changed lib test
       - run: flutter analyze
       - run: flutter test
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        if: runner.os == 'Linux'
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.2'
+          cache: true
+      - run: python3 tool/create_platform_host.py "$RUNNER_TEMP/ai_platform_host"
+      - run: flutter pub get
+        working-directory: ${{ runner.temp }}/ai_platform_host
+      - if: runner.os == 'Linux'
+        run: flutter build apk --release --target-platform android-arm64
+        working-directory: ${{ runner.temp }}/ai_platform_host
+      - if: runner.os == 'macOS'
+        run: flutter build ios --release --no-codesign
+        working-directory: ${{ runner.temp }}/ai_platform_host
+      - if: runner.os == 'macOS'
+        run: bash tool/check_weak_link.sh "$RUNNER_TEMP/ai_platform_host/build/ios/iphoneos/Runner.app"
+      - if: runner.os == 'macOS'
+        run: flutter build macos --release
+        working-directory: ${{ runner.temp }}/ai_platform_host
+      - if: runner.os == 'macOS'
+        run: bash tool/check_weak_link.sh "$RUNNER_TEMP/ai_platform_host/build/macos/Build/Products/Release/ai_platform_host.app"

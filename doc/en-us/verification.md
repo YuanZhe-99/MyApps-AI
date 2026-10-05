@@ -8,6 +8,11 @@ The checker does not verify translation meaning; review both languages together.
 
 ## Implementation acceptance
 
+Native CI generates an ephemeral Flutter host and builds an Android ARM64 release
+APK plus unsigned iOS and macOS release apps. Apple bundles are inspected with
+`tool/check_weak_link.sh`. These checks validate compilation, plugin inclusion and
+linking; old-system launch and model inference still require devices/simulators.
+
 When packages are introduced, add formatting, analysis and meaningful tests to CI.
 Use injected backends and clocks to check independent capabilities, the disabled
 gate, availability refresh, unknown statuses, download progress with unknown totals,

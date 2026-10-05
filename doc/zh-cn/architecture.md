@@ -6,7 +6,8 @@ MyApps-AI 为 MyAnime、MyDay、MyDevice 和 MyNihongo 集中维护系统提供�
 文本生成与校对。MyTranscribe 排除在范围之外。MyVidComp 当前没有对应实现需要迁移。
 
 首个实现为 `myapps_ai`：共享 Prompt 运行时、按能力调用的通道后端和输出工具。
-兼容步骤中原生通道仍由应用负责，下列平台和界面包尚未实现。
+兼容步骤中原生通道仍由应用负责。平台插件现已实现并进入构建验证，界面包尚未
+实现。消费者原生迁移等待平台构建检查。
 
 ## 包边界
 
@@ -19,12 +20,20 @@ MyApps-AI 为 MyAnime、MyDay、MyDevice 和 MyNihongo 集中维护系统提供�
 兼容步骤使用应用既有通道名称，共享默认通道为未来原生插件预留。
 `GenAiBackend` 保留 Prompt 契约，`CapabilityGenAiBackend` 增加独立能力查询、
 下载和校对。首版运行时仅调度 Prompt 请求。校对通道协议已通过模拟测试，
-原生整合和 MyNihongo 运行时迁移仍待完成。
+平台插件在 Android、iOS 和 macOS 注册共享通道。Android 支持独立 Prompt 与
+日语键盘校对；Apple 支持生成和约束候选，并报告校对不支持。
+MyNihongo 运行时迁移仍待完成。
 
 当前声明和行为见 [公共 API](api.md)。
 
 运行时使用平台桥接。可选界面包使用运行时和 MyApps-UI，基础界面包不引入原生 AI
-依赖。Android 校对依赖的打包方式将在平台包发布前通过构建验证决定。
+依赖。首版 Android 插件包含两个客户端，均延迟创建。这保留独立能力，避免在同一
+通道安装第二个处理器。插件提供 AICore 包可见性和 R8 消费者规则，最低 Android
+API 为 26，Java 目标为 17。原生依赖固定为 genai-prompt 1.0.0-beta4 和
+genai-proofreading 1.0.0-beta1。
+
+引擎卸载关闭客户端。取消后保留忙碌位置直到原生任务退出，并拒绝取消后的结果。
+Apple 保留隔离会话和 CocoaPods、SwiftPM 的 Foundation Models 弱链接。
 
 ## 应用所有权
 
