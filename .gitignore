@@ -1,0 +1,14 @@
+.dart_tool/
+.flutter-plugins-dependencies
+build/
+.gradle/
+Pods/
+.DS_Store
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+local.properties
+key.properties
+*.jks
+*.keystore
