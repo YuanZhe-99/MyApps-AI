@@ -2,13 +2,14 @@
 
 Shared infrastructure for system-provided on-device AI in My Apps.
 
-Initial consumers: MyAnime, MyDay, MyDevice and MyNihongo. MyTranscribe is
-outside this project's scope. Each application retains its business prompts,
-facts, decisions, settings and independent data.
+Applications can adopt the packages independently according to their required
+capabilities. Each application retains its business prompts, facts, decisions,
+settings and independent data. Record application-specific usage in that
+application's documentation.
 
 The `myapps_ai` package provides shared prompt execution, capability-aware channel
-contracts and output utilities. Existing application native channels remain in use;
-the shared native plugin now passes Android, iOS and macOS release build checks.
+contracts and output utilities. The shared native plugin registers the backend
+channel on Android, iOS and macOS.
 The optional myapps_ai_ui package renders cards and settings with app-owned labels.
 
 - [Architecture and contracts](doc/en-us/architecture.md)

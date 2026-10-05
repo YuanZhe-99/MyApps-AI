@@ -23,7 +23,7 @@ Validate Android release builds with R8 and native plugin registration. Validate
 Apple builds with Foundation Models weak-link inspection and old-system launch
 checks. Linux-only verification cannot establish Apple binary compatibility.
 
-Consumer regression checks preserve deterministic decisions, fact boundaries and
-MyNihongo's scoring and generated-question rules. Verify all four UI languages and
-license notices. Record hardware, OS, model and tested capability for device checks;
+Consumer regression checks preserve deterministic decisions, fact boundaries,
+scoring and generated-content rules. Verify each application's supported UI
+languages and license notices. Record hardware, OS, model and tested capability for device checks;
 mock tests and cloud stand-ins do not establish on-device inference quality.

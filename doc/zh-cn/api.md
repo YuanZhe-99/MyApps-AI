@@ -48,11 +48,11 @@ dispose 使结果失效并结束队列中的请求。原生取消仍是尽力而
 myapps_ai_ui 导出 MyAppsAiInsightCard、AiInsightSection 和 AiInsightLabels，处理
 分组、折叠预览、旧文本、进度、错误和生成署名。MyAppsAiSettings 接收本地化文案、
 状态描述、偏好和操作。消费者负责功能门控、路由、清空缓存、时间边界及语言变更。
-MyNihongo 教学专用界面保留在应用。
+领域专用呈现也由应用负责。
 
 `generateWithFallback` 接受消费者事实、生成与有效性回调，在安全拒答或解析结果
 无效后仅尝试一次备用事实，其他失败继续抛出。消费者决定备用事实是否不同。
-`AiInsightEntry` 和 `AiInsightStatus` 保留 MyDay/MyDevice 既有缓存条目字段、UTC
+`AiInsightEntry` 和 `AiInsightStatus` 提供缓存条目字段、UTC
 时间、容错解析及分组。模块映射、路径、原子写入、指纹和领域解析仍由消费者负责。
 
 `parseChoiceReply` 返回校验后的唯一候选及解析有效性。`stripMarkdown`、matchesScript

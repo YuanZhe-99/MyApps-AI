@@ -57,13 +57,13 @@ The `myapps_ai_ui` package exports `MyAppsAiInsightCard`, `AiInsightSection` and
 `AiInsightLabels` for grouping, collapsed preview, stale text, progress, errors and
 generated attribution. `MyAppsAiSettings` receives localized text, status wording,
 preferences and actions. Consumers handle feature gating, routing, cache clearing,
-time boundaries and locale changes. MyNihongo's teaching-specific UI remains local.
+time boundaries, locale changes and domain-specific presentation.
 
 `generateWithFallback` accepts consumer facts, generation and usability callbacks.
 It attempts fallback once after guardrail refusal or an unusable parsed result.
 Other failures propagate. Consumers decide whether fallback differs from primary.
-`AiInsightEntry` and `AiInsightStatus` preserve MyDay/MyDevice's existing cache
-entry fields, UTC timestamps, tolerant parsing and slot grouping. Module maps,
+`AiInsightEntry` and `AiInsightStatus` provide cache entry fields, UTC timestamps,
+tolerant parsing and slot grouping. Module maps,
 paths, atomic writes, fingerprints and domain parsers remain consumer-owned.
 
 `parseChoiceReply` returns validated unique candidates and parse validity.

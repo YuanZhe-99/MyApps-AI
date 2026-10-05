@@ -2,13 +2,13 @@
 
 ## Scope and current state
 
-MyApps-AI consolidates system-provided on-device text generation and proofreading
-for MyAnime, MyDay, MyDevice and MyNihongo. MyTranscribe is excluded. MyVidComp
-currently has no corresponding implementation to migrate.
+MyApps-AI provides reusable infrastructure for system-provided on-device text
+generation and proofreading. Applications select the packages and capabilities
+they need; eligibility depends on platform support and runtime availability.
 
 `myapps_ai` provides shared prompt execution, capability-aware channel contracts,
-output utilities and a feature execution gate. All four consumers use the shared
-native plugin; its Android, iOS and macOS release checks have passed. The optional
+output utilities and a feature execution gate. The shared native plugin supports
+Android, iOS and macOS. The optional
 UI package renders insight cards and common prompt settings with injected labels
 and callbacks. Apps keep their own routes, providers and teaching presentation.
 
@@ -26,8 +26,8 @@ downloads and proofreading. The initial runtime schedules prompt requests only.
 The platform plugin registers the shared channel on Android, iOS and macOS.
 Android supports independent Prompt and Japanese keyboard proofreading; Apple
 supports generation and constrained choices and reports proofreading unsupported.
-MyNihongo uses the shared execution gate through its feature adapter; its practice
-ordering and bounded retries remain app-owned.
+Capability adapters can use the shared execution gate. Domain task ordering and
+bounded retries remain application-owned.
 
 See [public API](api.md) for current declarations and behavior.
 
@@ -51,10 +51,9 @@ decisions, domain parsers, provider registrations, routes, persisted preferences
 and storage adapters. Existing settings and cache formats stay compatible during
 initial migration. Shared code does not share application data or sessions.
 
-MyAnime retains classification gaps and recommendation ranking. MyDay and MyDevice
-retain fact boundaries and fallback facts. MyNihongo retains teaching prompts,
-per-task validation, its existing typed-answer acceptance rule and the exclusion
-of generated questions from spaced-repetition scheduling.
+Classification, ranking, fact boundaries, fallback selection, scoring and task
+validation remain application-owned. The library does not decide how generated
+content participates in a domain workflow.
 
 ## Capability and execution contracts
 
@@ -80,11 +79,10 @@ of generated questions from spaced-repetition scheduling.
 
 ## Consumer and release contracts
 
-All four consumers retain thin application adapters and independent data.
-MyDay/MyDevice share insight orchestration and card presentation. MyAnime shares
-prompt settings but retains classification and recommendation workflows.
-MyNihongo shares native capabilities and execution gates while retaining its
-teaching UI and practice ordering. It remains Android-only for AI.
+Applications may independently adopt native capabilities, execution gates, insight
+orchestration, cards or settings through adapters. Each application owns its data
+and determines its supported platforms. Record package usage, domain policies and
+platform restrictions in the application's documentation.
 
 Publish a tagged shared dependency to Gitea and GitHub before updating consumers.
 Package and third-party license notices must accompany consumer integration.

@@ -5,7 +5,8 @@ implementation. Keep the English and Chinese documentation mirrors aligned.
 
 - Fetch relevant remotes before editing; understand divergence before proceeding.
 - Preserve unrelated local changes and application-owned behavior.
-- Scope excludes MyTranscribe's AI implementation.
+- Keep shared documentation independent of application adoption lists. Document
+  application-specific integrations in the corresponding application repository.
 - Document changed contracts and public declarations in the same change.
 - Every added function must explain Purpose, Inputs, Returns, Side effects and Notes.
 - Validate the final change set after the last edit.
