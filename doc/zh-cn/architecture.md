@@ -5,9 +5,9 @@
 MyApps-AI 为 MyAnime、MyDay、MyDevice 和 MyNihongo 集中维护系统提供的设备端
 文本生成与校对。MyTranscribe 排除在范围之外。MyVidComp 当前没有对应实现需要迁移。
 
-首个实现为 `myapps_ai`：共享 Prompt 运行时、按能力调用的通道后端和输出工具。
-兼容步骤中原生通道仍由应用负责。平台插件现已实现并进入构建验证，界面包尚未
-实现。消费者原生迁移等待平台构建检查。
+`myapps_ai` 提供共享 Prompt 执行、按能力调用的通道契约、输出工具和能力执行门控。
+四个消费者均使用共享原生插件，其 Android、iOS 和 macOS release 检查已通过。
+可选界面包尚未实现。
 
 ## 包边界
 
@@ -17,12 +17,12 @@ MyApps-AI 为 MyAnime、MyDay、MyDevice 和 MyNihongo 集中维护系统提供�
 | `myapps_ai_platform` | Android ML Kit GenAI/AICore 与 Apple Foundation Models 的 Flutter 原生桥接 |
 | `myapps_ai_ui` | 能力状态、下载、模型偏好、诊断详情及生成内容状态 |
 
-兼容步骤使用应用既有通道名称，共享默认通道为未来原生插件预留。
+消费者使用共享 com.yuanzhe.myapps_ai/genai 通道。
 `GenAiBackend` 保留 Prompt 契约，`CapabilityGenAiBackend` 增加独立能力查询、
 下载和校对。首版运行时仅调度 Prompt 请求。校对通道协议已通过模拟测试，
 平台插件在 Android、iOS 和 macOS 注册共享通道。Android 支持独立 Prompt 与
 日语键盘校对；Apple 支持生成和约束候选，并报告校对不支持。
-MyNihongo 运行时迁移仍待完成。
+MyNihongo 通过能力适配器使用共享执行门控，练习顺序和有限重试仍由应用负责。
 
 当前声明和行为见 [公共 API](api.md)。
 

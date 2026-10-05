@@ -6,11 +6,10 @@ MyApps-AI consolidates system-provided on-device text generation and proofreadin
 for MyAnime, MyDay, MyDevice and MyNihongo. MyTranscribe is excluded. MyVidComp
 currently has no corresponding implementation to migrate.
 
-The first implementation is `myapps_ai`: shared prompt runtime, capability-aware
-channel backend and output utilities. Native channels remain application-owned
-during this compatibility step. The platform plugin is now implemented for build
-validation; the UI package is not implemented. Consumer native migration waits
-for the platform build checks.
+`myapps_ai` provides shared prompt execution, capability-aware channel contracts,
+output utilities and a feature execution gate. All four consumers use the shared
+native plugin; its Android, iOS and macOS release checks have passed. The optional
+UI package is not implemented yet.
 
 ## Package boundaries
 
@@ -20,14 +19,14 @@ for the platform build checks.
 | `myapps_ai_platform` | Flutter native bridge for Android ML Kit GenAI/AICore and Apple Foundation Models |
 | `myapps_ai_ui` | Capability status, downloads, model preferences, diagnostic details and generated-content states |
 
-The compatibility step uses each application's existing channel name. The shared
-default channel is reserved for the future native plugin. `GenAiBackend` retains
+Consumers use the shared com.yuanzhe.myapps_ai/genai channel. `GenAiBackend` retains
 the prompt contract; `CapabilityGenAiBackend` adds independent capability queries,
 downloads and proofreading. The initial runtime schedules prompt requests only.
 The platform plugin registers the shared channel on Android, iOS and macOS.
 Android supports independent Prompt and Japanese keyboard proofreading; Apple
 supports generation and constrained choices and reports proofreading unsupported.
-MyNihongo's runtime migration remains pending.
+MyNihongo uses the shared execution gate through its feature adapter; its practice
+ordering and bounded retries remain app-owned.
 
 See [public API](api.md) for current declarations and behavior.
 
