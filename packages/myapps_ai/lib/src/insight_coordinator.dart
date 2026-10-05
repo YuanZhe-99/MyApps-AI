@@ -181,7 +181,7 @@ class AiInsightCoordinator<K, R> extends ChangeNotifier {
         );
       } else {
         next = AiInsightState(phase: AiInsightPhase.ready, entry: entry);
-        await _store(module, entry, fingerprint);
+        await _store(module, entry, fingerprint, epoch);
       }
     } on GenAiException catch (e) {
       if (e.failure == GenAiFailure.guardrail ||
@@ -192,7 +192,7 @@ class AiInsightCoordinator<K, R> extends ChangeNotifier {
           entry: entry,
           failure: e.failure,
         );
-        await _store(module, entry, fingerprint);
+        await _store(module, entry, fingerprint, epoch);
       } else {
         next = AiInsightState(
           phase: AiInsightPhase.failed,
@@ -210,7 +210,15 @@ class AiInsightCoordinator<K, R> extends ChangeNotifier {
       );
     }
     _running.remove(module);
-    if (epoch != _epoch || _disposed) return;
+    if (_disposed) return;
+    if (epoch != _epoch) {
+      final pending = _pending.remove(module);
+      if (pending != null) {
+        _latest.remove(module);
+        await ensure(pending.$1, force: pending.$2);
+      }
+      return;
+    }
     final pending = _pending.remove(module);
     if (pending != null) {
       final (req, f) = pending;
@@ -262,10 +270,11 @@ class AiInsightCoordinator<K, R> extends ChangeNotifier {
     K module,
     AiInsightEntry entry,
     String fingerprint,
+    int epoch,
   ) async {
-    if (_latest[module] != fingerprint) return;
+    if (epoch != _epoch || _latest[module] != fingerprint) return;
     final cache = await _cached();
-    if (_latest[module] != fingerprint || _disposed) return;
+    if (epoch != _epoch || _latest[module] != fingerprint || _disposed) return;
     cache[module] = entry;
     try {
       await save(cache);

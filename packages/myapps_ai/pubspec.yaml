@@ -1,6 +1,6 @@
 name: myapps_ai
 description: Shared capability contracts and execution for system on-device AI.
-version: 0.4.0
+version: 0.4.1
 publish_to: none
 environment:
   sdk: ^3.12.0

@@ -32,7 +32,8 @@ ordering and bounded retries remain app-owned.
 See [public API](api.md) for current declarations and behavior.
 
 The runtime uses the platform bridge. The optional UI package uses the runtime
-and MyApps-UI. Keep native AI dependencies out of MyApps-UI's base package.
+and standard Flutter Material widgets, inheriting the application's theme.
+Keep native AI dependencies out of MyApps-UI's base package.
 The initial Android plugin bundles both clients, created lazily. This preserves
 independent capabilities without installing a second handler on the same channel.
 The plugin supplies AICore package visibility and R8 consumer rules. Its minimum
