@@ -10,9 +10,9 @@
 | `GenAiStatusReport`, `GenAiCoreInfo` | Platform diagnostics, model variants, limits and locale support |
 | `GenAiBackend` | Existing prompt status/info/download/generate/choose/prewarm/cancel contract |
 | `CapabilityGenAiBackend` | Adds capabilityReport, downloadCapability and proofread; unsupported default for proofreading |
-| `MethodChannelGenAiBackend` | Injectable MethodChannel; default com.yuanzhe.myapps_ai/genai reserved for future plugin |
+| `MethodChannelGenAiBackend` | Injectable MethodChannel; shared plugin uses com.yuanzhe.myapps_ai/genai |
 
-Use an explicit existing application channel until a native plugin is published.
+Use the shared plugin channel in production; tests may inject a channel.
 Apple proofreading reports unsupported without invoking the channel. Android
 choice generation uses the validated line parser; Apple uses native constrained
 generation. Callers continue validating choices against their own business rules.

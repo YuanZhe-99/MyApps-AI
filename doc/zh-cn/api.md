@@ -10,9 +10,9 @@
 | `GenAiStatusReport`, `GenAiCoreInfo` | 平台诊断、模型变体、限制和语言支持 |
 | `GenAiBackend` | 既有 Prompt status/info/download/generate/choose/prewarm/cancel 契约 |
 | `CapabilityGenAiBackend` | 增加 capabilityReport、downloadCapability 和 proofread，默认不支持校对 |
-| `MethodChannelGenAiBackend` | 可注入 MethodChannel，默认 com.yuanzhe.myapps_ai/genai 为未来插件预留 |
+| `MethodChannelGenAiBackend` | 可注入 MethodChannel，共享插件使用 com.yuanzhe.myapps_ai/genai |
 
-原生插件发布前使用明确的应用既有通道。Apple 校对不调用通道，直接报告不支持。
+生产使用共享插件通道，测试可注入通道。Apple 校对不调用通道，直接报告不支持。
 Android 候选生成使用校验后的行解析，Apple 使用原生约束生成。调用方继续根据
 业务规则校验候选项。
 
