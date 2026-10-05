@@ -1,5 +1,10 @@
 # Public API
 
+`MyAppsAiCapabilityTile` and its constructor/build render an independently
+reported capability using injected title, status, icon, optional diagnostics and
+action. Build makes no backend calls. Capability adapters own enablement,
+availability queries, download serialization and diagnostic visibility.
+
 ## Backend
 
 | Declaration | Contract |

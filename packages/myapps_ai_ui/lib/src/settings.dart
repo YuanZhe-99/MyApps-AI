@@ -2,6 +2,61 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:myapps_ai/myapps_ai.dart';
 
+/// Common feature status presentation for capability-specific adapters.
+class MyAppsAiCapabilityTile extends StatelessWidget {
+  final String title;
+  final String statusText;
+  final IconData icon;
+  final String? diagnostic;
+  final Widget? action;
+
+  /// Purpose: Bind a capability status without owning service policy.
+  /// Inputs: Localized title/status, icon, diagnostic and action.
+  /// Returns: Capability tile. Side effects: None.
+  /// Notes: The application decides when diagnostic information is visible.
+  const MyAppsAiCapabilityTile({
+    super.key,
+    required this.title,
+    required this.statusText,
+    required this.icon,
+    this.diagnostic,
+    this.action,
+  });
+
+  /// Purpose: Render shared capability status and optional diagnostic details.
+  /// Inputs: context. Returns: Tile. Side effects: Supplied action only.
+  /// Notes: No backend calls occur during build.
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title, style: theme.textTheme.bodyMedium),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            statusText,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          if (diagnostic != null)
+            Text(
+              diagnostic!,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontFamily: 'monospace',
+              ),
+            ),
+        ],
+      ),
+      isThreeLine: diagnostic != null,
+      trailing: action,
+    );
+  }
+}
+
 /// Common prompt settings presentation with injected application interactions.
 class MyAppsAiSettings extends StatelessWidget {
   const MyAppsAiSettings({

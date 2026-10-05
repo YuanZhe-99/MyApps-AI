@@ -1,6 +1,6 @@
 name: myapps_ai_ui
 description: Shared presentation for on-device AI states with app-owned labels.
-version: 0.4.1
+version: 0.4.2
 publish_to: none
 environment:
   sdk: ^3.12.0
