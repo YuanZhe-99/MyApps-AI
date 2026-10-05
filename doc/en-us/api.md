@@ -19,6 +19,12 @@ generation. Callers continue validating choices against their own business rules
 
 ## Runtime
 
+`AiInsightCoordinator<K, R>` owns cache loading, per-key request coalescing, stale
+result rejection, failure retry policy and clearing. Inject key/fingerprint/model,
+generation, skipped-entry and persistence callbacks. `ensure`, `stateOf` and
+`clearAll` expose the workflow. Clearing/disposal invalidates outstanding results.
+`AiInsightState` and `AiInsightPhase` describe presentation state.
+
 `AiExecutionGate` provides a single-flight lock for feature-specific adapters.
 `run` checks enabled before acquiring the lock, passes a current-generation check
 to the operation, applies a timeout and waits for cancellation cleanup before
@@ -46,6 +52,12 @@ fails queued requests. Native cancellation remains best effort; mock validation
 does not establish whether a system model actually stops immediately.
 
 ## Output utilities
+
+The `myapps_ai_ui` package exports `MyAppsAiInsightCard`, `AiInsightSection` and
+`AiInsightLabels` for grouping, collapsed preview, stale text, progress, errors and
+generated attribution. `MyAppsAiSettings` receives localized text, status wording,
+preferences and actions. Consumers handle feature gating, routing, cache clearing,
+time boundaries and locale changes. MyNihongo's teaching-specific UI remains local.
 
 `generateWithFallback` accepts consumer facts, generation and usability callbacks.
 It attempts fallback once after guardrail refusal or an unusable parsed result.

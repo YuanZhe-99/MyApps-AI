@@ -9,11 +9,12 @@ currently has no corresponding implementation to migrate.
 `myapps_ai` provides shared prompt execution, capability-aware channel contracts,
 output utilities and a feature execution gate. All four consumers use the shared
 native plugin; its Android, iOS and macOS release checks have passed. The optional
-UI package is not implemented yet.
+UI package renders insight cards and common prompt settings with injected labels
+and callbacks. Apps keep their own routes, providers and teaching presentation.
 
 ## Package boundaries
 
-| Intended package | Responsibility |
+| Package | Responsibility |
 |---|---|
 | `myapps_ai` | Capability types, scheduling, lifecycle, cancellation and optional generation/cache orchestration |
 | `myapps_ai_platform` | Flutter native bridge for Android ML Kit GenAI/AICore and Apple Foundation Models |

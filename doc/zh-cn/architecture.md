@@ -7,11 +7,12 @@ MyApps-AI 为 MyAnime、MyDay、MyDevice 和 MyNihongo 集中维护系统提供�
 
 `myapps_ai` 提供共享 Prompt 执行、按能力调用的通道契约、输出工具和能力执行门控。
 四个消费者均使用共享原生插件，其 Android、iOS 和 macOS release 检查已通过。
-可选界面包尚未实现。
+可选界面包通过注入文案和回调呈现洞察卡及公共 Prompt 设置。
+应用保留路由、provider 和教学呈现。
 
 ## 包边界
 
-| 预定包 | 职责 |
+| 包 | 职责 |
 |---|---|
 | `myapps_ai` | 能力类型、调度、生命周期、取消，以及可选生成和缓存流程 |
 | `myapps_ai_platform` | Android ML Kit GenAI/AICore 与 Apple Foundation Models 的 Flutter 原生桥接 |

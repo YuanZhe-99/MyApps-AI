@@ -18,6 +18,11 @@ Android 候选生成使用校验后的行解析，Apple 使用原生约束生成
 
 ## 运行时
 
+`AiInsightCoordinator<K, R>` 负责缓存加载、按键合并请求、过期结果丢弃、失败重试策略
+和清空。注入键、指纹、模型、生成、跳过条目和持久化回调，使用 ensure、stateOf
+和 clearAll 操作。清空及 dispose 使执行中的结果失效。
+`AiInsightState` 和 `AiInsightPhase` 描述呈现状态。
+
 `AiExecutionGate` 为按能力适配器提供单请求执行锁。`run` 获取锁前检查开关，向
 操作传入当前代数检查，设置超时，并在取消清理完成后释放占用。`invalidate` 阻止
 过期结果发布，`busy` 和 `generation` 提供占用状态及状态发布标记。消费者提供
@@ -39,6 +44,11 @@ dispose 使结果失效并结束队列中的请求。原生取消仍是尽力而
 系统模型立即停止。
 
 ## 输出工具
+
+myapps_ai_ui 导出 MyAppsAiInsightCard、AiInsightSection 和 AiInsightLabels，处理
+分组、折叠预览、旧文本、进度、错误和生成署名。MyAppsAiSettings 接收本地化文案、
+状态描述、偏好和操作。消费者负责功能门控、路由、清空缓存、时间边界及语言变更。
+MyNihongo 教学专用界面保留在应用。
 
 `generateWithFallback` 接受消费者事实、生成与有效性回调，在安全拒答或解析结果
 无效后仅尝试一次备用事实，其他失败继续抛出。消费者决定备用事实是否不同。

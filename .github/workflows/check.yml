@@ -20,10 +20,13 @@ jobs:
       - run: python3 tool/check_docs.py
       - run: git diff --check
   flutter:
+    strategy:
+      matrix:
+        package: [myapps_ai, myapps_ai_ui]
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: packages/myapps_ai
+        working-directory: packages/${{ matrix.package }}
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2

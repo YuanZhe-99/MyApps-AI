@@ -1,16 +1,15 @@
-name: myapps_ai
-description: Shared capability contracts and execution for system on-device AI.
+name: myapps_ai_ui
+description: Shared presentation for on-device AI states with app-owned labels.
 version: 0.4.0
 publish_to: none
 environment:
   sdk: ^3.12.0
 dependencies:
-  myapps_ai_platform:
-    path: ../myapps_ai_platform
   flutter:
     sdk: flutter
+  myapps_ai:
+    path: ../myapps_ai
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  fake_async: ^1.3.3

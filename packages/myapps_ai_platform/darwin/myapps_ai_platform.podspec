@@ -4,7 +4,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'myapps_ai_platform'
-  s.version          = '0.3.0'
+  s.version          = '0.4.0'
   s.summary          = 'On-device Foundation Models bridge for MyDevice!!!!!.'
   s.description      = <<-DESC
 Answers the com.yuanzhe.myapps_ai/genai method channel with Apple's on-device
