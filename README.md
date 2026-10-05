@@ -8,7 +8,8 @@ facts, decisions, settings and independent data.
 
 The `myapps_ai` package provides shared prompt execution, capability-aware channel
 contracts and output utilities. Existing application native channels remain in use;
-the shared native plugin and optional UI package are not implemented yet.
+the shared native plugin now passes Android, iOS and macOS release build checks.
+The optional UI package is not implemented yet.
 
 - [Architecture and contracts](doc/en-us/architecture.md)
 - [Verification](doc/en-us/verification.md)

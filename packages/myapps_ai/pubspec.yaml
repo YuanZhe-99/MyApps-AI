@@ -1,10 +1,12 @@
 name: myapps_ai
 description: Shared capability contracts and execution for system on-device AI.
-version: 0.1.0
+version: 0.2.0
 publish_to: none
 environment:
   sdk: ^3.12.0
 dependencies:
+  myapps_ai_platform:
+    path: ../myapps_ai_platform
   flutter:
     sdk: flutter
 dev_dependencies:
