@@ -4,6 +4,8 @@
 
 Dependency ranges instead of exact pins in the ASR and model packages, so they
 resolve on Flutter 3.44.2 used by consumer CI (`hooks 2.2.0` needed a newer SDK).
+CI runs package checks on Flutter 3.47.6 (ffigen 22) and a new consumer-resolution
+check on 3.44.2.
 
 ## 0.5.0 - 2026-10-06
 

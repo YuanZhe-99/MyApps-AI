@@ -7,6 +7,11 @@ resolves the neutral packages and fails if they reach a concrete backend or decl
 levels, table row counts and identical code blocks, plus local Markdown links.
 The checker does not verify translation meaning; review both languages together.
 
+Package checks run on the maintainers' Flutter (3.47.6), which binding generation
+with ffigen 22 requires. `python3 tool/check_consumer_resolution.py <dir>` creates an
+application depending on every package and resolves it on the consumers' Flutter
+(3.44.2); dependency constraints are ranges so consumers can resolve them.
+
 ## Implementation acceptance
 
 Native CI generates an ephemeral Flutter host and builds an Android ARM64 release

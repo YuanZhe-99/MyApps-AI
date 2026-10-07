@@ -6,6 +6,10 @@
 若其引入具体后端或声明插件则失败。CI 检查文档路径、标题层级、表格行数和相同代码块，
 以及本地 Markdown 链接。检查器不验证翻译含义，需同时审阅两种语言。
 
+包检查在维护者使用的 Flutter（3.47.6）上运行，ffigen 22 生成绑定需要该版本。
+`python3 tool/check_consumer_resolution.py <dir>` 创建依赖全部包的应用，并在消费者使用的
+Flutter（3.44.2）上解析；依赖约束使用版本范围以便消费者解析。
+
 ## 实现验收
 
 原生 CI 生成临时 Flutter 宿主，构建 Android ARM64 release APK，以及未签名 iOS
