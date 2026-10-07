@@ -225,3 +225,5 @@ management; the backend loads only installed files. Each entry stores
 `llamaMinimumBuild`, the first llama.cpp build carrying its architecture;
 `llamaCatalogFor(build)` lists the entries a build can load, and tests require the
 pinned build to support the whole catalog.
+
+Runtime refreshStatus asks the injected backend on every platform; system eligibility is enforced by the platform backend.

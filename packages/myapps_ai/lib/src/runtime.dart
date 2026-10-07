@@ -230,11 +230,6 @@ class OnDeviceAiService extends ChangeNotifier {
   /// on, when Settings opens, and from "Check again".
   Future<void> refreshStatus({String? localeTag}) async {
     if (!_enabled) return;
-    if (!platformMayHaveOnDeviceModel) {
-      _report = GenAiStatusReport.unsupported;
-      notifyListeners();
-      return;
-    }
     final epoch = _epoch;
     final report = await _backend.statusReport(
       force: true,

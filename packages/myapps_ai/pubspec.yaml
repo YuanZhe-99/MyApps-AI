@@ -1,6 +1,6 @@
 name: myapps_ai
 description: Shared AI orchestration over injected backends.
-version: 0.5.1
+version: 0.5.2
 publish_to: none
 environment:
   sdk: ^3.12.0

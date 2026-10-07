@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.2 - 2026-10-07
+
+Runtime readiness now comes from the injected backend on every platform, enabling
+local and online models on Windows/Linux. System eligibility remains in the
+platform backend; the disabled gate is unchanged.
+
 ## 0.5.1 - 2026-10-06
 
 Dependency ranges instead of exact pins in the ASR and model packages, so they

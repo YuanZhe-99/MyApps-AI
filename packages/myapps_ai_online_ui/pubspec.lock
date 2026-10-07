@@ -145,21 +145,21 @@ packages:
       path: "../myapps_ai_core"
       relative: true
     source: path
-    version: "0.5.0"
+    version: "0.5.2"
   myapps_ai_llm:
     dependency: transitive
     description:
       path: "../myapps_ai_llm"
       relative: true
     source: path
-    version: "0.5.0"
+    version: "0.5.2"
   myapps_ai_online:
     dependency: "direct main"
     description:
       path: "../myapps_ai_online"
       relative: true
     source: path
-    version: "0.5.0"
+    version: "0.5.2"
   path:
     dependency: transitive
     description:

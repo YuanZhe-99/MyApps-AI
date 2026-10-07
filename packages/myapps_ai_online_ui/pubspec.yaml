@@ -1,6 +1,6 @@
 name: myapps_ai_online_ui
 description: Optional shared "Settings → AI → Online sources" UI — provider list and editor, API key entry, connection test and privacy notice — with app-owned labels and input widgets.
-version: 0.5.1
+version: 0.5.2
 publish_to: none
 environment:
   sdk: ^3.12.0

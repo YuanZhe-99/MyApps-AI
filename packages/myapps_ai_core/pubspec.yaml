@@ -1,6 +1,6 @@
 name: myapps_ai_core
 description: Backend-neutral AI capability contracts, execution gate and output utilities.
-version: 0.5.1
+version: 0.5.2
 publish_to: none
 environment:
   sdk: ^3.12.0

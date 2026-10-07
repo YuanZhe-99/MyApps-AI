@@ -1,6 +1,6 @@
 name: myapps_ai_local_ui
 description: Optional shared "Settings → AI → Local models" management UI with app-owned labels.
-version: 0.5.1
+version: 0.5.2
 publish_to: none
 environment:
   sdk: ^3.12.0

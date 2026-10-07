@@ -1,7 +1,7 @@
 name: myapps_ai_asr_apple
 description: >-
   Apple adapters for myapps_ai_asr: FluidAudio Parakeet on the Neural Engine and the on-device system recogniser, through a prebuilt bridge fetched by hash.
-version: 0.5.1
+version: 0.5.2
 publish_to: none
 environment:
   sdk: ^3.12.0

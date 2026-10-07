@@ -177,3 +177,5 @@ MyApps-UI 输入组件，因此本包不依赖 MyApps-UI。保存时调用
 Qwen3.5 0.8B 与 2B（Q4_K_M）及 Gemma 4 E2B 指令版（Google QAT Q4_0）。应用将其注册到模型
 管理；后端只加载已安装的文件。每个条目保存 `llamaMinimumBuild`，即支持其架构的最早
 llama.cpp 构建；`llamaCatalogFor(build)` 列出某构建可加载的条目，测试要求固定构建支持全部目录。
+
+运行时 refreshStatus 在所有平台查询注入后端；系统可用性由平台后端检查。

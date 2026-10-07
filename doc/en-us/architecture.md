@@ -79,6 +79,8 @@ content participates in a domain workflow.
 - Disabled means no backend calls, including status queries. Disabling during work
   allows cancellation cleanup but prevents further requests and result publication.
 - Detect availability before each use; preserve unknown and unreachable states.
+- Runtime availability comes from the injected backend on every platform; only
+  the system backend applies the system-AI platform gate.
 - Downloads begin only through an explicit user action and are system-managed.
 - Inference remains on-device. No cloud fallback is part of this repository.
 - Serialize execution within each application; interactive requests take priority.
