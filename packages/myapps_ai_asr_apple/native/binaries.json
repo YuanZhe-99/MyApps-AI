@@ -1,0 +1,53 @@
+{
+  "upstream": {
+    "version": "FluidAudio 0.17.4",
+    "releaseAssets": "apple-bin-fluidaudio-0.17.4-3"
+  },
+  "targets": {
+    "macos_arm64": {
+      "url": "https://github.com/YuanZhe-99/MyTranscribe/releases/download/apple-bin-fluidaudio-0.17.4-3/lasr-apple.zip",
+      "sha256": "9964b9309f582ccd24d3646c835e9735b697bbca1c15a4eccff7a32f31569e46",
+      "bytes": 48585355,
+      "entry": "libLasrApple.dylib",
+      "files": [
+        { "from": "macos/libLasrApple.dylib", "as": "libLasrApple.dylib", "slice": "arm64" }
+      ]
+    },
+    "macos_x64": {
+      "url": "https://github.com/YuanZhe-99/MyTranscribe/releases/download/apple-bin-fluidaudio-0.17.4-3/lasr-apple.zip",
+      "sha256": "9964b9309f582ccd24d3646c835e9735b697bbca1c15a4eccff7a32f31569e46",
+      "bytes": 48585355,
+      "entry": "libLasrApple.dylib",
+      "files": [
+        { "from": "macos/libLasrApple.dylib", "as": "libLasrApple.dylib", "slice": "x86_64" }
+      ]
+    },
+    "ios_arm64": {
+      "url": "https://github.com/YuanZhe-99/MyTranscribe/releases/download/apple-bin-fluidaudio-0.17.4-3/lasr-apple.zip",
+      "sha256": "9964b9309f582ccd24d3646c835e9735b697bbca1c15a4eccff7a32f31569e46",
+      "bytes": 48585355,
+      "entry": "libLasrApple.dylib",
+      "files": [
+        { "from": "ios/LasrApple", "as": "libLasrApple.dylib", "slice": "arm64" }
+      ]
+    },
+    "ios_simulator_arm64": {
+      "url": "https://github.com/YuanZhe-99/MyTranscribe/releases/download/apple-bin-fluidaudio-0.17.4-3/lasr-apple.zip",
+      "sha256": "9964b9309f582ccd24d3646c835e9735b697bbca1c15a4eccff7a32f31569e46",
+      "bytes": 48585355,
+      "entry": "libLasrApple.dylib",
+      "files": [
+        { "from": "ios-simulator/LasrApple", "as": "libLasrApple.dylib", "slice": "arm64" }
+      ]
+    },
+    "ios_simulator_x64": {
+      "url": "https://github.com/YuanZhe-99/MyTranscribe/releases/download/apple-bin-fluidaudio-0.17.4-3/lasr-apple.zip",
+      "sha256": "9964b9309f582ccd24d3646c835e9735b697bbca1c15a4eccff7a32f31569e46",
+      "bytes": 48585355,
+      "entry": "libLasrApple.dylib",
+      "files": [
+        { "from": "ios-simulator/LasrApple", "as": "libLasrApple.dylib", "slice": "x86_64" }
+      ]
+    }
+  }
+}

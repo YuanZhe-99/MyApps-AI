@@ -129,14 +129,14 @@ packages:
       path: "../myapps_ai"
       relative: true
     source: path
-    version: "0.4.1"
-  myapps_ai_platform:
-    dependency: transitive
+    version: "0.5.0"
+  myapps_ai_core:
+    dependency: "direct main"
     description:
-      path: "../myapps_ai_platform"
+      path: "../myapps_ai_core"
       relative: true
     source: path
-    version: "0.4.1"
+    version: "0.5.0"
   path:
     dependency: transitive
     description:

@@ -1,0 +1,328 @@
+name: Native prebuild (whisper.cpp)
+
+# Builds the whisper.cpp libraries for the targets upstream publishes no
+# usable binaries for, once per upstream version, and publishes them as the
+# assets of a GitHub Release in this repository. The app build never compiles
+# native code (native code is consumed as prebuilt binaries only): it downloads these
+# archives, and upstream's own for every other target, by URL and SHA-256 from
+# packages/myapps_ai_asr_whisper/native/binaries.json.
+#
+# - Android arm64-v8a and x86_64: upstream publishes no Android binaries.
+# - Windows ARM64: upstream's zip needs libomp140.aarch64.dll from Visual
+#   Studio's debug_nonredist folder, which may not be shipped, and targets
+#   ARMv8.7, which older Snapdragon laptops cannot run. This build is ARMv8.2
+#   with dot-product and FP16, and uses ggml's own thread pool (no OpenMP).
+# - GPU backends (L3), each a separate library ggml loads only where the
+#   driver is there: OpenCL for Adreno on Windows ARM64 and Android arm64,
+#   Vulkan on Windows x64 (upstream's x64 zip has none, so the whole x64 set
+#   is built here) and on Android arm64. The OpenCL and Vulkan runtimes
+#   themselves are the device's own and are never bundled.
+#
+# The release tag is `whisper-bin-<upstream version>-<n>`, separate from the
+# repository's `v*` package tags.
+
+on:
+  workflow_dispatch:
+    inputs:
+      upstream_ref:
+        description: whisper.cpp tag to build
+        required: true
+        default: v1.9.4
+      release_tag:
+        description: Release to publish the archives to
+        required: true
+        default: whisper-bin-v1.9.4-3
+
+permissions:
+  contents: write
+
+env:
+  # The NDK Flutter 3.44 builds Android apps with.
+  NDK_VERSION: '28.2.13676358'
+  # The oldest Android the app runs on (Flutter 3.44's default minSdk).
+  ANDROID_API: '24'
+  # Khronos headers and loaders the GPU backends are built against, pinned.
+  OPENCL_TAG: v2026.05.29
+  VULKAN_HEADERS_TAG: vulkan-sdk-1.4.357.0
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # GPU backends on phones only; the x86_64 build is for emulators.
+          - abi: arm64-v8a
+            gpu: true
+          - abi: x86_64
+            gpu: false
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          repository: ggml-org/whisper.cpp
+          ref: ${{ inputs.upstream_ref }}
+          path: whisper
+
+      - name: Install Ninja and the NDK
+        run: |
+          sudo apt-get update && sudo apt-get install -y ninja-build zip
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$NDK_VERSION" > /dev/null
+          echo "NDK=$ANDROID_HOME/ndk/$NDK_VERSION" >> "$GITHUB_ENV"
+
+      # OpenCL: the Khronos headers, and the loader to link against — the
+      # phone's own libOpenCL.so answers at run time. Vulkan: the C++ headers
+      # (the NDK has only the C ones), glslc and SPIR-V headers on the host. The
+      # Vulkan backend links the API 28 stub: ggml needs Vulkan 1.1, which
+      # Android guarantees from 9 on; on an older phone the backend does not
+      # load and the app stays on the CPU.
+      - name: GPU headers and tools
+        if: matrix.gpu
+        run: |
+          sudo apt-get install -y glslc
+          git clone --depth 1 -b "$OPENCL_TAG" https://github.com/KhronosGroup/OpenCL-Headers "$RUNNER_TEMP/ocl-headers"
+          git clone --depth 1 -b "$OPENCL_TAG" https://github.com/KhronosGroup/OpenCL-ICD-Loader "$RUNNER_TEMP/ocl-loader"
+          git clone --depth 1 -b "$VULKAN_HEADERS_TAG" https://github.com/KhronosGroup/Vulkan-Headers "$RUNNER_TEMP/vk-headers"
+          git clone --depth 1 -b "$VULKAN_HEADERS_TAG" https://github.com/KhronosGroup/SPIRV-Headers "$RUNNER_TEMP/spirv-headers"
+          cmake -S "$RUNNER_TEMP/spirv-headers" -B "$RUNNER_TEMP/spirv-headers/build" -DSPIRV_HEADERS_ENABLE_TESTS=OFF -DCMAKE_INSTALL_PREFIX="$RUNNER_TEMP/spirv"
+          cmake --build "$RUNNER_TEMP/spirv-headers/build" --target install
+          P="$RUNNER_TEMP/ocl"
+          cmake -S "$RUNNER_TEMP/ocl-headers" -B "$RUNNER_TEMP/ocl-headers/build" -DBUILD_TESTING=OFF -DOPENCL_HEADERS_BUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX="$P"
+          cmake --build "$RUNNER_TEMP/ocl-headers/build" --target install
+          cmake -S "$RUNNER_TEMP/ocl-loader" -B "$RUNNER_TEMP/ocl-loader/build" -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="$NDK/build/cmake/android.toolchain.cmake" \
+            -DANDROID_ABI=${{ matrix.abi }} -DANDROID_PLATFORM=android-$ANDROID_API \
+            -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
+            -DOPENCL_ICD_LOADER_HEADERS_DIR="$P/include" -DCMAKE_INSTALL_PREFIX="$P"
+          cmake --build "$RUNNER_TEMP/ocl-loader/build" --target install
+          spirv=$(dirname "$(find "$RUNNER_TEMP/spirv" -name SPIRV-HeadersConfig.cmake | head -1)")
+          sysroot="$NDK/toolchains/llvm/prebuilt/linux-x86_64/sysroot"
+          {
+            echo "GPU_FLAGS=-DGGML_OPENCL=ON -DOpenCL_INCLUDE_DIR=$P/include -DOpenCL_LIBRARY=$P/lib/libOpenCL.so -DGGML_VULKAN=ON -DVulkan_INCLUDE_DIR=$RUNNER_TEMP/vk-headers/include -DVulkan_LIBRARY=$sysroot/usr/lib/aarch64-linux-android/28/libvulkan.so -DVulkan_GLSLC_EXECUTABLE=/usr/bin/glslc -DSPIRV-Headers_DIR=$spirv -DCMAKE_CXX_FLAGS=-I$RUNNER_TEMP/spirv/include"
+          } >> "$GITHUB_ENV"
+
+      # Every CPU variant is built and ggml loads the best one at run time,
+      # so a phone nobody here has tested gets code it can run.
+      - name: Build
+        run: |
+          cmake -S whisper -B build -G Ninja $GPU_FLAGS \
+            -DCMAKE_TOOLCHAIN_FILE="$NDK/build/cmake/android.toolchain.cmake" \
+            -DANDROID_ABI=${{ matrix.abi }} \
+            -DANDROID_PLATFORM=android-$ANDROID_API \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_SHARED_LIBS=ON \
+            -DGGML_BACKEND_DL=ON \
+            -DGGML_CPU_ALL_VARIANTS=ON \
+            -DGGML_NATIVE=OFF \
+            -DGGML_OPENMP=OFF \
+            -DGGML_CCACHE=OFF \
+            -DWHISPER_BUILD_TESTS=OFF \
+            -DWHISPER_BUILD_EXAMPLES=OFF \
+            -DWHISPER_BUILD_SERVER=OFF \
+            -DWHISPER_SDL2=OFF \
+            -DWHISPER_CURL=OFF
+          cmake --build build --config Release
+
+      - name: Package
+        run: |
+          out=whisper-android-${{ matrix.abi }}
+          mkdir "$out"
+          cp build/bin/libwhisper.so build/bin/libparakeet.so build/bin/libggml.so build/bin/libggml-base.so build/bin/libggml-cpu-*.so "$out/"
+          for gpu in opencl vulkan; do
+            if [ -f "build/bin/libggml-$gpu.so" ]; then cp "build/bin/libggml-$gpu.so" "$out/"; fi
+          done
+          "$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip" --strip-unneeded "$out"/*.so
+          cp whisper/LICENSE "$out/LICENSE"
+          {
+            echo "whisper.cpp ${{ inputs.upstream_ref }} ($(git -C whisper rev-parse HEAD))"
+            echo "Android ${{ matrix.abi }}, API $ANDROID_API, NDK $NDK_VERSION"
+            echo "GGML_BACKEND_DL, GGML_CPU_ALL_VARIANTS, no OpenMP"
+            if [ "${{ matrix.gpu }}" = true ]; then echo "OpenCL (Khronos $OPENCL_TAG), Vulkan (headers $VULKAN_HEADERS_TAG)"; fi
+          } > "$out/BUILDINFO.txt"
+          (cd "$out" && zip -X -r "../$out.zip" .)
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: whisper-android-${{ matrix.abi }}
+          path: whisper-android-${{ matrix.abi }}.zip
+
+  windows-arm64:
+    runs-on: windows-11-arm
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          repository: ggml-org/whisper.cpp
+          ref: ${{ inputs.upstream_ref }}
+          path: whisper
+
+      # clang, as upstream builds its own Windows ARM64 binaries: MSVC's cl.exe
+      # lacks the FP16 vector intrinsics. Visual Studio's own when the image
+      # has that component, otherwise a pinned LLVM, by hash.
+      - name: Find or install clang
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          "VSINSTALL=$vs" | Out-File -Append $env:GITHUB_ENV
+          $found = @("$vs\VC\Tools\Llvm\ARM64\bin", "C:\Program Files\LLVM\bin") | Where-Object { Test-Path "$_\clang.exe" }
+          if (-not $found) {
+            $msi = "$env:RUNNER_TEMP\llvm.msi"
+            Invoke-WebRequest https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.2/LLVM-23.1.2-woa64.msi -OutFile $msi
+            if ((Get-FileHash $msi -Algorithm SHA256).Hash.ToLower() -ne '72fd68d6dc22723ef55fbb150033bf38c8e860a2b4015ddc59dad841db1a30c8') { throw 'LLVM installer hash mismatch' }
+            Start-Process msiexec -ArgumentList '/i', $msi, '/qn' -Wait
+            $found = @("C:\Program Files\LLVM\bin")
+          }
+          "LLVM=$(@($found)[0].Replace('\', '/'))" | Out-File -Append $env:GITHUB_ENV
+
+      # The Khronos OpenCL headers and loader to link against; the laptop's
+      # own OpenCL.dll answers at run time.
+      - name: OpenCL headers and loader
+        shell: cmd
+        run: |
+          call "%VSINSTALL%\VC\Auxiliary\Build\vcvarsall.bat" arm64 || exit /b 1
+          git clone --depth 1 -b %OPENCL_TAG% https://github.com/KhronosGroup/OpenCL-Headers "%RUNNER_TEMP%\ocl-headers" || exit /b 1
+          git clone --depth 1 -b %OPENCL_TAG% https://github.com/KhronosGroup/OpenCL-ICD-Loader "%RUNNER_TEMP%\ocl-loader" || exit /b 1
+          cmake -S "%RUNNER_TEMP%\ocl-headers" -B "%RUNNER_TEMP%\ocl-headers\build" -G Ninja -DBUILD_TESTING=OFF -DOPENCL_HEADERS_BUILD_TESTING=OFF "-DCMAKE_INSTALL_PREFIX=%RUNNER_TEMP%\ocl" || exit /b 1
+          cmake --build "%RUNNER_TEMP%\ocl-headers\build" --target install || exit /b 1
+          cmake -S "%RUNNER_TEMP%\ocl-loader" -B "%RUNNER_TEMP%\ocl-loader\build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF "-DCMAKE_PREFIX_PATH=%RUNNER_TEMP%\ocl" "-DCMAKE_INSTALL_PREFIX=%RUNNER_TEMP%\ocl" || exit /b 1
+          cmake --build "%RUNNER_TEMP%\ocl-loader\build" --target install || exit /b 1
+
+      - name: Build
+        shell: cmd
+        run: |
+          call "%VSINSTALL%\VC\Auxiliary\Build\vcvarsall.bat" arm64 || exit /b 1
+          cmake -S whisper -B build -G Ninja ^
+            "-DCMAKE_PREFIX_PATH=%RUNNER_TEMP%\ocl" ^
+            -DGGML_BACKEND_DL=ON ^
+            -DGGML_OPENCL=ON ^
+            -DCMAKE_BUILD_TYPE=Release ^
+            -DCMAKE_SYSTEM_NAME=Windows ^
+            -DCMAKE_SYSTEM_PROCESSOR=ARM64 ^
+            "-DCMAKE_C_COMPILER=%LLVM%/clang.exe" ^
+            "-DCMAKE_CXX_COMPILER=%LLVM%/clang++.exe" ^
+            -DCMAKE_C_COMPILER_TARGET=arm64-pc-windows-msvc ^
+            -DCMAKE_CXX_COMPILER_TARGET=arm64-pc-windows-msvc ^
+            "-DCMAKE_C_FLAGS=-march=armv8.2-a+dotprod+fp16 -fvectorize -ffp-model=fast -fno-finite-math-only" ^
+            "-DCMAKE_CXX_FLAGS=-march=armv8.2-a+dotprod+fp16 -fvectorize -ffp-model=fast -fno-finite-math-only" ^
+            -DGGML_CPU_ARM_ARCH=armv8.2-a+dotprod+fp16 ^
+            -DBUILD_SHARED_LIBS=ON ^
+            -DGGML_NATIVE=OFF ^
+            -DGGML_OPENMP=OFF ^
+            -DGGML_CCACHE=OFF ^
+            -DWHISPER_BUILD_TESTS=OFF ^
+            -DWHISPER_BUILD_EXAMPLES=OFF ^
+            -DWHISPER_BUILD_SERVER=OFF ^
+            -DWHISPER_SDL2=OFF ^
+            -DWHISPER_CURL=OFF || exit /b 1
+          cmake --build build --config Release || exit /b 1
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $out = 'whisper-win-arm64'
+          New-Item -ItemType Directory $out | Out-Null
+          Get-ChildItem build\bin -Filter *.dll | Where-Object { $_.Name -match '^(whisper|parakeet|ggml.*)\.dll$' } | Copy-Item -Destination $out
+          Copy-Item whisper\LICENSE "$out\LICENSE"
+          @(
+            "whisper.cpp ${{ inputs.upstream_ref }} ($(git -C whisper rev-parse HEAD))",
+            "Windows ARM64, clang $((& "$env:LLVM/clang.exe" --version | Select-Object -First 1))",
+            "-march=armv8.2-a+dotprod+fp16, no OpenMP; GGML_BACKEND_DL; OpenCL (Khronos $env:OPENCL_TAG)"
+          ) | Set-Content "$out\BUILDINFO.txt"
+          Get-ChildItem $out | Select-Object Name, Length
+          Compress-Archive -Path "$out\*" -DestinationPath "$out.zip"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: whisper-win-arm64
+          path: whisper-win-arm64.zip
+
+  # The whole x64 set: upstream's x64 zip has no GPU backend, and a Vulkan
+  # backend built here would not be ABI-matched to upstream's other libraries.
+  windows-x64:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          repository: ggml-org/whisper.cpp
+          ref: ${{ inputs.upstream_ref }}
+          path: whisper
+
+      - name: Install the Vulkan SDK
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          "VSINSTALL=$vs" | Out-File -Append $env:GITHUB_ENV
+          $exe = "$env:RUNNER_TEMP\vulkansdk.exe"
+          Invoke-WebRequest https://sdk.lunarg.com/sdk/download/1.4.357.0/windows/vulkansdk-windows-X64-1.4.357.0.exe -OutFile $exe
+          if ((Get-FileHash $exe -Algorithm SHA256).Hash.ToLower() -ne '81f474711e9042f4cd22b31b2f7a8870db2e428b21586fb43dd80150be97310d') { throw 'Vulkan SDK hash mismatch' }
+          Start-Process $exe -ArgumentList '--root', 'C:\VulkanSDK', '--accept-licenses', '--default-answer', '--confirm-command', 'install' -Wait
+          "VULKAN_SDK=C:\VulkanSDK" | Out-File -Append $env:GITHUB_ENV
+          "C:\VulkanSDK\Bin" | Out-File -Append $env:GITHUB_PATH
+
+      - name: Build
+        shell: cmd
+        run: |
+          call "%VSINSTALL%\VC\Auxiliary\Build\vcvarsall.bat" x64 || exit /b 1
+          cmake -S whisper -B build -G Ninja ^
+            -DCMAKE_BUILD_TYPE=Release ^
+            -DBUILD_SHARED_LIBS=ON ^
+            -DGGML_BACKEND_DL=ON ^
+            -DGGML_CPU_ALL_VARIANTS=ON ^
+            -DGGML_VULKAN=ON ^
+            -DGGML_NATIVE=OFF ^
+            -DGGML_OPENMP=OFF ^
+            -DGGML_CCACHE=OFF ^
+            -DWHISPER_BUILD_TESTS=OFF ^
+            -DWHISPER_BUILD_EXAMPLES=OFF ^
+            -DWHISPER_BUILD_SERVER=OFF ^
+            -DWHISPER_SDL2=OFF ^
+            -DWHISPER_CURL=OFF || exit /b 1
+          cmake --build build --config Release || exit /b 1
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $out = 'whisper-win-x64'
+          New-Item -ItemType Directory $out | Out-Null
+          Get-ChildItem build\bin -Filter *.dll | Where-Object { $_.Name -match '^(whisper|parakeet|ggml.*)\.dll$' } | Copy-Item -Destination $out
+          Copy-Item whisper\LICENSE "$out\LICENSE"
+          @(
+            "whisper.cpp ${{ inputs.upstream_ref }} ($(git -C whisper rev-parse HEAD))",
+            "Windows x64, MSVC; GGML_BACKEND_DL, GGML_CPU_ALL_VARIANTS, no OpenMP",
+            "Vulkan (SDK 1.4.357.0)"
+          ) | Set-Content "$out\BUILDINFO.txt"
+          Get-ChildItem $out | Select-Object Name, Length
+          Compress-Archive -Path "$out\*" -DestinationPath "$out.zip"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: whisper-win-x64
+          path: whisper-win-x64.zip
+
+  release:
+    needs: [android, windows-arm64, windows-x64]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd dist
+          sha256sum *.zip | tee SHA256SUMS
+          {
+            echo "whisper.cpp ${{ inputs.upstream_ref }} built for the targets upstream publishes no usable binaries for."
+            echo "Consumed by the myapps_ai_asr_whisper build hook by URL and SHA-256; not an app release."
+            echo
+            echo '```'
+            cat SHA256SUMS
+            echo '```'
+          } > notes.md
+          gh release create "${{ inputs.release_tag }}" *.zip SHA256SUMS \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "${{ inputs.release_tag }}" \
+            --notes-file notes.md \
+            --latest=false

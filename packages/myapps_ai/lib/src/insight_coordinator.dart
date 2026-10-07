@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'backend.dart';
-import 'insight_entry.dart';
+import 'package:myapps_ai_core/myapps_ai_core.dart';
 
 /// Where a card is in its life cycle.
 enum AiInsightPhase {

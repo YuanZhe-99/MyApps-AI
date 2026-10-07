@@ -1,0 +1,81 @@
+name: Apple prebuild (FluidAudio bridge)
+
+# Builds the Neural Engine bridge — packages/myapps_ai_asr_apple/bridge, a small
+# Swift package that puts FluidAudio behind five C functions — into dynamic
+# libraries for macOS, iOS and the iOS Simulator, and publishes them as the
+# assets of a GitHub Release in this repository. FluidAudio compiles C, C++
+# and Swift; none of that happens in an app build: the package's build hook
+# downloads these by URL and SHA-256
+# from packages/myapps_ai_asr_apple/native/binaries.json.
+#
+# The release tag is `apple-bin-<bridge revision>`, separate from the
+# repository's `v*` package tags.
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release to publish the archive to
+        required: true
+        default: apple-bin-fluidaudio-0.17.4-3
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # xcodebuild rather than `swift build`: FluidAudio links a prebuilt
+      # static library (NemoTextProcessing's xcframework) that a multi-arch
+      # `swift build` does not find.
+      - name: Build for macOS, iOS and the Simulator
+        working-directory: packages/myapps_ai_asr_apple/bridge
+        run: |
+          set -o pipefail
+          for platform in "macOS" "iOS" "iOS Simulator"; do
+            xcodebuild -scheme LasrApple -configuration Release \
+              -destination "generic/platform=$platform" \
+              -derivedDataPath "$RUNNER_TEMP/dd" \
+              SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=NO \
+              build | tail -5
+          done
+          find "$RUNNER_TEMP/dd/Build/Products" -name 'LasrApple.framework' -maxdepth 3
+
+      - name: Package
+        run: |
+          out="$RUNNER_TEMP/lasr-apple"
+          mkdir -p "$out/macos" "$out/ios" "$out/ios-simulator"
+          P="$RUNNER_TEMP/dd/Build/Products"
+          # The framework's binary, not the debug symbols beside it (.dSYM).
+          binary() { find "$P/$1" -type f -name LasrApple -path '*LasrApple.framework/*' -not -path '*.dSYM/*' | head -1; }
+          cp "$(binary Release)" "$out/macos/libLasrApple.dylib"
+          cp "$(binary Release-iphoneos)" "$out/ios/LasrApple"
+          cp "$(binary Release-iphonesimulator)" "$out/ios-simulator/LasrApple"
+          for f in "$out"/macos/libLasrApple.dylib "$out"/ios/LasrApple "$out"/ios-simulator/LasrApple; do
+            echo "== $f"; lipo -info "$f"; otool -L "$f" | head -20
+            # Fail rather than publish anything but a dynamic library.
+            otool -hv "$f" | grep -q DYLIB
+          done
+          fa=$(find "$RUNNER_TEMP/dd/SourcePackages/checkouts/FluidAudio" -maxdepth 1 -name LICENSE | head -1)
+          cp "$fa" "$out/LICENSE-FluidAudio"
+          {
+            echo "LasrApple bridge ($(git rev-parse HEAD)) over FluidAudio 0.17.4"
+            echo "macOS 14 (arm64, x86_64); iOS 17 (arm64); iOS Simulator (arm64, x86_64)"
+            xcodebuild -version | head -1
+          } > "$out/BUILDINFO.txt"
+          (cd "$out" && zip -X -r "$GITHUB_WORKSPACE/lasr-apple.zip" .)
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha256sum lasr-apple.zip | tee SHA256SUMS
+          gh release create "${{ inputs.release_tag }}" lasr-apple.zip SHA256SUMS \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "${{ inputs.release_tag }}" \
+            --notes "The Neural Engine bridge (FluidAudio 0.17.4) for macOS, iOS and the iOS Simulator. Consumed by the myapps_ai_asr_apple build hook by URL and SHA-256; not an app release." \
+            --latest=false

@@ -2,7 +2,8 @@
 
 ## Repository checks
 
-Run `python3 tool/check_docs.py`. CI checks matching documentation paths, heading
+Run `python3 tool/check_docs.py` and `python3 tool/check_dependencies.py`. The latter
+resolves the neutral packages and fails if they reach a concrete backend or declare a plugin. CI checks matching documentation paths, heading
 levels, table row counts and identical code blocks, plus local Markdown links.
 The checker does not verify translation meaning; review both languages together.
 
@@ -12,6 +13,20 @@ Native CI generates an ephemeral Flutter host and builds an Android ARM64 releas
 APK plus unsigned iOS and macOS release apps. Apple bundles are inspected with
 `tool/check_weak_link.sh`. These checks validate compilation, plugin inclusion and
 linking; old-system launch and model inference still require devices/simulators.
+
+ASR backend package tests run each build hook, load the prebuilt library on the CI
+host and check routes, fingerprints and errors without models. Live inference is
+opt-in through environment variables: `LASR_TEST_MODEL` (a whisper GGML model) and
+`QWEN_TEST_DIR` (an unpacked Qwen3-ASR package), transcribing the bundled JFK clip.
+The Apple bridge loads only on macOS and iOS; elsewhere its routes are unavailable.
+The `asr-native-prebuild` and `asr-apple-prebuild` workflows build only binaries
+upstream does not publish, and run manually.
+
+The llama.cpp package test checks its manifest, loads the upstream library and checks
+a missing model without loading. `LLAMA_TEST_MODEL` (a small GGUF chat model) enables
+streaming, determinism, token limits, stop strings, cancellation, busy, context limit
+and reload checks. One application process must not load two different ggml sets;
+packages that bundle ggml are not combined until their sets are aligned or isolated.
 
 When packages are introduced, add formatting, analysis and meaningful tests to CI.
 Use injected backends and clocks to check independent capabilities, the disabled

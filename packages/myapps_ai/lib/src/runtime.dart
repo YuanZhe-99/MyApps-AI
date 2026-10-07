@@ -4,7 +4,7 @@ import 'dart:collection';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart'
     show AppLifecycleListener, AppLifecycleState;
-import 'backend.dart';
+import 'package:myapps_ai_core/myapps_ai_core.dart';
 
 /// How far a model download has got.
 @immutable
@@ -101,25 +101,15 @@ class _AiJob<T> {
 /// `AiAssistService`.
 class OnDeviceAiService extends ChangeNotifier {
   /// Purpose: Create the service.
-  /// Inputs: `backend`; `now` — clock, injectable for tests.
+  /// Inputs: `backend` — the consumer-registered backend; `now` — clock,
+  /// injectable for tests.
   /// Returns: A new `OnDeviceAiService`.
   /// Side effects: None.
-  /// Notes: Off until [setEnabled] turns it on.
-  OnDeviceAiService({GenAiBackend? backend, DateTime Function()? now})
-    : _backend = backend ?? MethodChannelGenAiBackend(),
-      _now = now ?? DateTime.now;
-
-  /// The app-wide instance.
-  static OnDeviceAiService instance = OnDeviceAiService();
-
-  /// Purpose: Replace the singleton for a test.
-  /// Inputs: `service`.
-  /// Returns: None.
-  /// Side effects: Points [instance] at another service.
-  /// Notes: Test-only.
-  @visibleForTesting
-  static void setInstanceForTest(OnDeviceAiService service) =>
-      instance = service;
+  /// Notes: Off until [setEnabled] turns it on. The runtime never constructs a
+  /// concrete backend, so consumers choose which native package is linked.
+  /// Applications own any singleton and its test replacement.
+  OnDeviceAiService({required this._backend, DateTime Function()? now})
+    : _now = now ?? DateTime.now;
 
   /// How long one request may take before it is given up on. Generous,
   /// because a first inference after a cold start pages the model in.

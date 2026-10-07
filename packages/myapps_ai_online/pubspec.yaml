@@ -1,0 +1,18 @@
+name: myapps_ai_online
+description: Online AI providers, OpenAI-compatible LLM and transcription clients, templates and privacy notice models; pure Dart HTTP, no native code.
+version: 0.5.0
+publish_to: none
+environment:
+  sdk: ^3.12.0
+dependencies:
+  myapps_ai_core:
+    path: ../myapps_ai_core
+  myapps_ai_llm:
+    path: ../myapps_ai_llm
+  flutter:
+    sdk: flutter
+  http: ^1.6.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

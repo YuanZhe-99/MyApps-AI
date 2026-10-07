@@ -1,0 +1,17 @@
+name: myapps_ai_models
+description: Capability-neutral model artifact manifests, downloads, installation, leases and device-local engine state.
+version: 0.5.0
+publish_to: none
+environment:
+  sdk: ^3.12.0
+dependencies:
+  flutter:
+    sdk: flutter
+  archive: 4.2.0
+  crypto: 3.0.7
+  http: 1.6.0
+  path: 1.9.1
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

@@ -1,16 +1,23 @@
 # MyApps-AI
 
-Shared infrastructure for system-provided on-device AI in My Apps.
+Shared AI infrastructure for My Apps: system AI, local models and online sources.
 
 Applications can adopt the packages independently according to their required
 capabilities. Each application retains its business prompts, facts, decisions,
 settings and independent data. Record application-specific usage in that
 application's documentation.
 
-The `myapps_ai` package provides shared prompt execution, capability-aware channel
-contracts and output utilities. The shared native plugin registers the backend
-channel on Android, iOS and macOS.
+`myapps_ai_core` holds backend-neutral contracts and output utilities without any
+native code. `myapps_ai` provides shared prompt execution over an injected
+backend. The optional `myapps_ai_platform` plugin provides the system AI backend
+on Android, iOS and macOS; consumers depend on it explicitly.
 The optional myapps_ai_ui package renders cards and settings with app-owned labels.
+
+Optional capability packages: `myapps_ai_models` (model artifacts),
+`myapps_ai_llm` with the `myapps_ai_llm_llama` backend, `myapps_ai_asr` with the
+whisper.cpp, sherpa-onnx and Apple backends, and `myapps_ai_online`, plus the
+`myapps_ai_local_ui` and `myapps_ai_online_ui` settings pages. Native backends use
+pinned upstream prebuilt binaries; nothing is compiled in a consumer build.
 
 - [Architecture and contracts](doc/en-us/architecture.md)
 - [Verification](doc/en-us/verification.md)

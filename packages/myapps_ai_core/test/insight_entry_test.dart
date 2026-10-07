@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:myapps_ai/myapps_ai.dart';
+import 'package:myapps_ai_core/myapps_ai_core.dart';
 
 /// Purpose: Verify existing consumer cache compatibility. Inputs: None.
 /// Returns: None. Side effects: None. Notes: Cache is rebuildable and device-local.

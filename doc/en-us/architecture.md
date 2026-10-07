@@ -16,9 +16,25 @@ and callbacks. Apps keep their own routes, providers and teaching presentation.
 
 | Package | Responsibility |
 |---|---|
-| `myapps_ai` | Capability types, scheduling, lifecycle, cancellation and optional generation/cache orchestration |
-| `myapps_ai_platform` | Flutter native bridge for Android ML Kit GenAI/AICore and Apple Foundation Models |
+| `myapps_ai_core` | Backend-neutral capability types, backend contracts, execution gate, fallback generation, cache entries and output validation; no plugin or native runtime |
+| `myapps_ai` | Scheduling, lifecycle, cancellation and optional generation/cache orchestration over an injected backend |
+| `myapps_ai_models` | Capability-neutral model artifacts: manifests, resumable SHA-256-verified downloads, atomic installs with rollback, leases, status, device-local engine state and self-test contracts; storage root and HTTP client injected; no native runtime |
+| `myapps_ai_llm` | Text LLM messages, sampling, streaming events, metrics, declared abilities and the `GenAiBackend` adapter; no native runtime |
+| `myapps_ai_llm_llama` | Optional llama.cpp `LlmBackend` over upstream release binaries fetched by URL and SHA-256 in a build hook; CPU by default, GPU offload opt-in |
+| `myapps_ai_asr` | Speech recognition contracts, routes, policy-driven fallback, crash isolation, diarization protocol and ASR self-test fixture; no native runtime |
+| `myapps_ai_asr_whisper`, `myapps_ai_asr_sherpa`, `myapps_ai_asr_apple` | Optional ASR backends: whisper.cpp (Whisper, Parakeet), sherpa-onnx (Qwen3-ASR, diarization) and Apple (FluidAudio, system recogniser); prebuilt native libraries fetched by URL and SHA-256 in build hooks, never compiled in a consumer build |
+| `myapps_ai_online` | Online provider records without keys, templates, OpenAI-compatible streaming LLM backend, online transcription client and online privacy notice model; pure Dart over `package:http` |
+| `myapps_ai_platform` | Optional Flutter native bridge and `MethodChannelGenAiBackend` for Android ML Kit GenAI/AICore and Apple Foundation Models |
 | `myapps_ai_ui` | Capability status, downloads, model preferences, diagnostic details and generated-content states |
+| `myapps_ai_local_ui` | Optional local model management page driven by `ModelManagementController`; depends only on `myapps_ai_models` |
+| `myapps_ai_online_ui` | Optional online sources pages: provider list, editor, key entry, explicit connection test and privacy notice; storage, wording and MyApps-UI input widgets injected by the application |
+
+Dependencies point one way: `myapps_ai_ui → myapps_ai → myapps_ai_core`, and
+`myapps_ai_platform → myapps_ai_core`. `myapps_ai_models` depends on no other
+MyApps-AI package, application storage or state management. Neither the runtime nor the UI depends on
+the platform plugin. Consumers that want system AI depend on `myapps_ai_platform`
+explicitly and pass its backend to `OnDeviceAiService`; consumers that do not
+link no native AI code. `tool/check_dependencies.py` enforces this.
 
 Consumers use the shared com.yuanzhe.myapps_ai/genai channel. `GenAiBackend` retains
 the prompt contract; `CapabilityGenAiBackend` adds independent capability queries,
@@ -31,7 +47,7 @@ bounded retries remain application-owned.
 
 See [public API](api.md) for current declarations and behavior.
 
-The runtime uses the platform bridge. The optional UI package uses the runtime
+The runtime receives its backend from the consumer. The optional UI package uses the runtime
 and standard Flutter Material widgets, inheriting the application's theme.
 Keep native AI dependencies out of MyApps-UI's base package.
 The initial Android plugin bundles both clients, created lazily. This preserves
@@ -86,3 +102,13 @@ platform restrictions in the application's documentation.
 
 Publish a tagged shared dependency to Gitea and GitHub before updating consumers.
 Package and third-party license notices must accompany consumer integration.
+
+Native backends consume upstream release binaries pinned by URL and SHA-256; each
+package version pins one upstream release, and its headers, bindings and model list
+move with it. One process loads one ggml set. An application bundling both
+`myapps_ai_asr_whisper` and `myapps_ai_llm_llama` must align them on the same ggml
+version, binding their updates; it may pin either package to an older release to do
+so. When llama.cpp is pinned older, offer only `llamaCatalogFor(build)`: every
+catalog entry records the first llama.cpp build carrying its architecture, and a
+model that build cannot load is removed from that application's list. Record the
+aligned versions and the resulting model list in the application's documentation.

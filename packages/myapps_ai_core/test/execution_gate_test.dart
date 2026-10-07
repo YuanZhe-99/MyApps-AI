@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:myapps_ai/myapps_ai.dart';
+import 'package:myapps_ai_core/myapps_ai_core.dart';
 
 /// Purpose: Verify lock and obsolete-result handling. Inputs: None.
 /// Returns: None. Side effects: Runs fake operations. Notes: No platform model.

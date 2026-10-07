@@ -14,9 +14,23 @@ MyApps-AI 提供可复用的系统设备端文本生成与校对基础设施。�
 
 | 包 | 职责 |
 |---|---|
-| `myapps_ai` | 能力类型、调度、生命周期、取消，以及可选生成和缓存流程 |
-| `myapps_ai_platform` | Android ML Kit GenAI/AICore 与 Apple Foundation Models 的 Flutter 原生桥接 |
+| `myapps_ai_core` | 与后端无关的能力类型、后端契约、执行门控、备用生成、缓存条目和输出校验；不含插件或原生运行库 |
+| `myapps_ai` | 基于注入后端的调度、生命周期、取消，以及可选生成和缓存流程 |
+| `myapps_ai_models` | 与能力无关的模型制品：清单、可断点续传并校验 SHA-256 的下载、可回滚的原子安装、租约、状态、设备本地引擎状态和自检契约；存储根目录与 HTTP 客户端由外部注入；不含原生运行库 |
+| `myapps_ai_llm` | 文本 LLM 消息、采样、流式事件、指标、能力声明及 `GenAiBackend` 适配；不含原生运行库 |
+| `myapps_ai_llm_llama` | 可选 llama.cpp `LlmBackend`，使用构建 hook 按 URL 与 SHA-256 获取的上游 release 二进制；默认 CPU，GPU 卸载需显式开启 |
+| `myapps_ai_asr` | 语音识别契约、路线、按策略回退、崩溃隔离、说话人分离协议与 ASR 自检样本；不含原生运行库 |
+| `myapps_ai_asr_whisper`、`myapps_ai_asr_sherpa`、`myapps_ai_asr_apple` | 可选 ASR 后端：whisper.cpp（Whisper、Parakeet）、sherpa-onnx（Qwen3-ASR、说话人分离）和 Apple（FluidAudio、系统识别器）；原生库为预构建二进制，由构建 hook 按 URL 与 SHA-256 获取，消费者构建中从不编译 |
+| `myapps_ai_online` | 不含密钥的在线来源记录、模板、OpenAI 兼容流式 LLM 后端、在线转写客户端及在线隐私提醒模型；基于 `package:http` 的纯 Dart 包 |
+| `myapps_ai_platform` | 可选的 Android ML Kit GenAI/AICore 与 Apple Foundation Models Flutter 原生桥接及 `MethodChannelGenAiBackend` |
 | `myapps_ai_ui` | 能力状态、下载、模型偏好、诊断详情及生成内容状态 |
+| `myapps_ai_local_ui` | 由 `ModelManagementController` 驱动的可选本地模型管理页面；仅依赖 `myapps_ai_models` |
+| `myapps_ai_online_ui` | 可选在线来源页面：来源列表、编辑、密钥输入、主动连接测试和隐私提醒；存储、文案及 MyApps-UI 输入组件由应用注入 |
+
+依赖单向：`myapps_ai_ui → myapps_ai → myapps_ai_core`，`myapps_ai_platform →
+myapps_ai_core`。`myapps_ai_models` 不依赖其他 MyApps-AI 包、应用存储或状态管理。运行时与界面均不依赖平台插件。需要系统 AI 的消费者显式依赖
+`myapps_ai_platform`，并把其后端传给 `OnDeviceAiService`；不需要的消费者不链接
+任何原生 AI 代码。`tool/check_dependencies.py` 负责检查此约束。
 
 消费者使用共享 com.yuanzhe.myapps_ai/genai 通道。
 `GenAiBackend` 保留 Prompt 契约，`CapabilityGenAiBackend` 增加独立能力查询、
@@ -27,7 +41,7 @@ MyApps-AI 提供可复用的系统设备端文本生成与校对基础设施。�
 
 当前声明和行为见 [公共 API](api.md)。
 
-运行时使用平台桥接。可选界面包使用运行时及标准 Flutter Material 控件，继承应用
+运行时由消费者注入后端。可选界面包使用运行时及标准 Flutter Material 控件，继承应用
 主题，基础界面包不引入原生 AI
 依赖。首版 Android 插件包含两个客户端，均延迟创建。这保留独立能力，避免在同一
 通道安装第二个处理器。插件提供 AICore 包可见性和 R8 消费者规则，最低 Android
@@ -70,3 +84,10 @@ Apple 保留隔离会话和 CocoaPods、SwiftPM 的 Foundation Models 弱链接�
 
 更新消费者之前，先将带标签的共享依赖发布至 Gitea 和 GitHub。消费者集成同时补充
 包及第三方授权声明。
+
+原生后端使用按 URL 与 SHA-256 固定的上游 release 二进制；每个包版本固定一个上游 release，
+其头文件、绑定和模型列表随之一同更新。同一进程只加载一套 ggml。同时打包
+`myapps_ai_asr_whisper` 与 `myapps_ai_llm_llama` 的应用必须将二者对齐到同一 ggml 版本，
+二者更新随之绑定；为此可将任一包固定到较旧版本。llama.cpp 固定到较旧版本时，只提供
+`llamaCatalogFor(build)` 的结果：目录中每个条目记录支持其架构的最早 llama.cpp 构建，
+该构建无法加载的模型须从该应用的列表中移除。对齐后的版本及最终模型列表记录在应用文档中。

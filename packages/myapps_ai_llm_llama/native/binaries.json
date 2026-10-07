@@ -1,0 +1,194 @@
+{
+  "upstream": {
+    "repository": "ggml-org/llama.cpp",
+    "tag": "b11457",
+    "ggml": "0.26.0",
+    "llama": "0.6.0"
+  },
+  "targets": {
+    "linux_x64": {
+      "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11457/llama-b11457-bin-ubuntu-x64.tar.gz",
+      "sha256": "210eaa41a16e0d24fa44071cb62f95702ef903c84d86506d6482ac919bcee078",
+      "bytes": 17733249,
+      "entry": "libllama.so.0",
+      "files": [
+        {
+          "from": "llama-b11457/libllama.so.0.6.0",
+          "as": "libllama.so.0"
+        },
+        {
+          "from": "llama-b11457/libggml.so.0.26.0",
+          "as": "libggml.so.0"
+        },
+        {
+          "from": "llama-b11457/libggml-base.so.0.26.0",
+          "as": "libggml-base.so.0"
+        },
+        {
+          "from": "llama-b11457/libggml-cpu-*.so"
+        }
+      ]
+    },
+    "windows_x64": {
+      "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11457/llama-b11457-bin-win-cpu-x64.zip",
+      "sha256": "ed20ed40e10c04d0853d8acf8700f0e6c1bb8212f0cc70c3a0da13dcbbc1b802",
+      "bytes": 19436652,
+      "entry": "llama.dll",
+      "files": [
+        {
+          "from": "llama.dll"
+        },
+        {
+          "from": "ggml.dll"
+        },
+        {
+          "from": "ggml-base.dll"
+        },
+        {
+          "from": "ggml-cpu-*.dll"
+        },
+        {
+          "from": "libomp.dll"
+        }
+      ]
+    },
+    "windows_arm64": {
+      "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11457/llama-b11457-bin-win-cpu-arm64.zip",
+      "sha256": "fab992671bd26ba4117da4f70f330fe1b9fe69eb8ce952281cabf4c5c5f2a17e",
+      "bytes": 12264648,
+      "entry": "llama.dll",
+      "files": [
+        {
+          "from": "llama.dll"
+        },
+        {
+          "from": "ggml.dll"
+        },
+        {
+          "from": "ggml-base.dll"
+        },
+        {
+          "from": "ggml-cpu.dll"
+        },
+        {
+          "from": "libomp.dll"
+        }
+      ]
+    },
+    "android_arm64": {
+      "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11457/llama-b11457-bin-android-arm64.tar.gz",
+      "sha256": "a46bd0e2ba72e8d9702a633dbb39fb97d16047fd7f01402d83321ca7ef541a07",
+      "bytes": 74275610,
+      "entry": "libllama.so",
+      "files": [
+        {
+          "from": "llama-b11457/libllama.so"
+        },
+        {
+          "from": "llama-b11457/libggml.so"
+        },
+        {
+          "from": "llama-b11457/libggml-base.so"
+        },
+        {
+          "from": "llama-b11457/libggml-cpu-*.so"
+        }
+      ]
+    },
+    "macos_arm64": {
+      "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11457/llama-b11457-xcframework.zip",
+      "sha256": "4c344f0b9ec2c972b2262eb45b2c5b23d6ff4a644135f40642a7a37336e94f1c",
+      "bytes": 62278231,
+      "entry": "libllama.dylib",
+      "files": [
+        {
+          "from": "build-apple/llama.xcframework/macos-arm64_x86_64/llama.framework/Versions/A/llama",
+          "as": "libllama.dylib",
+          "slice": "arm64"
+        }
+      ]
+    },
+    "macos_x64": {
+      "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11457/llama-b11457-xcframework.zip",
+      "sha256": "4c344f0b9ec2c972b2262eb45b2c5b23d6ff4a644135f40642a7a37336e94f1c",
+      "bytes": 62278231,
+      "entry": "libllama.dylib",
+      "files": [
+        {
+          "from": "build-apple/llama.xcframework/macos-arm64_x86_64/llama.framework/Versions/A/llama",
+          "as": "libllama.dylib",
+          "slice": "x86_64"
+        }
+      ]
+    },
+    "ios_arm64": {
+      "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11457/llama-b11457-xcframework.zip",
+      "sha256": "4c344f0b9ec2c972b2262eb45b2c5b23d6ff4a644135f40642a7a37336e94f1c",
+      "bytes": 62278231,
+      "entry": "libllama.dylib",
+      "files": [
+        {
+          "from": "build-apple/llama.xcframework/ios-arm64/llama.framework/llama",
+          "as": "libllama.dylib",
+          "slice": "arm64"
+        }
+      ]
+    }
+  },
+  "variants": {
+    "vulkan": {
+      "linux_x64": {
+        "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11457/llama-b11457-bin-ubuntu-vulkan-x64.tar.gz",
+        "sha256": "cb528b7f75e466f5113685d8aca7a9966a5dac3192f2e12bd4f96d7505fbea39",
+        "bytes": 31679935,
+        "entry": "libllama.so.0",
+        "files": [
+          {
+            "from": "llama-b11457/libllama.so.0.6.0",
+            "as": "libllama.so.0"
+          },
+          {
+            "from": "llama-b11457/libggml.so.0.26.0",
+            "as": "libggml.so.0"
+          },
+          {
+            "from": "llama-b11457/libggml-base.so.0.26.0",
+            "as": "libggml-base.so.0"
+          },
+          {
+            "from": "llama-b11457/libggml-cpu-*.so"
+          },
+          {
+            "from": "llama-b11457/libggml-vulkan.so"
+          }
+        ]
+      },
+      "windows_x64": {
+        "url": "https://github.com/ggml-org/llama.cpp/releases/download/b11457/llama-b11457-bin-win-vulkan-x64.zip",
+        "sha256": "d01301582c711a69b9747b5984710d6ca99e57d95f680d3d33753cec570b4cb6",
+        "bytes": 33377746,
+        "entry": "llama.dll",
+        "files": [
+          {
+            "from": "llama.dll"
+          },
+          {
+            "from": "ggml.dll"
+          },
+          {
+            "from": "ggml-base.dll"
+          },
+          {
+            "from": "ggml-cpu-*.dll"
+          },
+          {
+            "from": "libomp.dll"
+          },
+          {
+            "from": "ggml-vulkan.dll"
+          }
+        ]
+      }
+    }
+  }
+}

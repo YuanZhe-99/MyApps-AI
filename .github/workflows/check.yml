@@ -19,10 +19,19 @@ jobs:
           python-version: '3.12'
       - run: python3 tool/check_docs.py
       - run: git diff --check
+  dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.2'
+          cache: true
+      - run: python3 tool/check_dependencies.py
   flutter:
     strategy:
       matrix:
-        package: [myapps_ai, myapps_ai_ui]
+        package: [myapps_ai_core, myapps_ai, myapps_ai_models, myapps_ai_llm, myapps_ai_llm_llama, myapps_ai_asr, myapps_ai_asr_whisper, myapps_ai_asr_sherpa, myapps_ai_asr_apple, myapps_ai_online, myapps_ai_platform, myapps_ai_ui, myapps_ai_local_ui, myapps_ai_online_ui]
     runs-on: ubuntu-latest
     defaults:
       run:

@@ -1,0 +1,80 @@
+{
+  "upstream": {
+    "version": "v1.13.8",
+    "releaseAssets": "https://github.com/k2-fsa/sherpa-onnx/releases/tag/v1.13.8"
+  },
+  "targets": {
+    "windows_x64": {
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.8/sherpa-onnx-v1.13.8-win-x64-shared-MD-Release-no-tts-lib.tar.bz2",
+      "sha256": "b90992b888710715d613a4fedcd75d5b4db294ef64f3194e4f77ea0a8b387441",
+      "bytes": 6907798,
+      "entry": "sherpa-onnx-c-api.dll",
+      "files": [
+        { "from": "sherpa-onnx-v1.13.8-win-x64-shared-MD-Release-no-tts-lib/lib/sherpa-onnx-c-api.dll" },
+        { "from": "sherpa-onnx-v1.13.8-win-x64-shared-MD-Release-no-tts-lib/lib/onnxruntime.dll" },
+        { "from": "sherpa-onnx-v1.13.8-win-x64-shared-MD-Release-no-tts-lib/lib/onnxruntime_providers_shared.dll" }
+      ]
+    },
+    "windows_arm64": {
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.8/sherpa-onnx-v1.13.8-win-arm64-shared-MD-Release-no-tts-lib.tar.bz2",
+      "sha256": "bdd1e9a1334d2f79ce64fac4cc417d88a954f961f6055056c213c9f5321efdd4",
+      "bytes": 6569191,
+      "entry": "sherpa-onnx-c-api.dll",
+      "files": [
+        { "from": "sherpa-onnx-v1.13.8-win-arm64-shared-MD-Release-no-tts-lib/lib/sherpa-onnx-c-api.dll" },
+        { "from": "sherpa-onnx-v1.13.8-win-arm64-shared-MD-Release-no-tts-lib/lib/onnxruntime.dll" },
+        { "from": "sherpa-onnx-v1.13.8-win-arm64-shared-MD-Release-no-tts-lib/lib/onnxruntime_providers_shared.dll" }
+      ]
+    },
+    "android_arm64": {
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.8/sherpa-onnx-1.13.8.aar",
+      "sha256": "633c24321e06b1fe79feafa03ea16cbc0f8a286641e2da3559bac91bdb13bd96",
+      "bytes": 50129134,
+      "entry": "libsherpa-onnx-c-api.so",
+      "files": [
+        { "from": "jni/arm64-v8a/libsherpa-onnx-c-api.so" },
+        { "from": "jni/arm64-v8a/libonnxruntime.so" }
+      ]
+    },
+    "android_x64": {
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.8/sherpa-onnx-1.13.8.aar",
+      "sha256": "633c24321e06b1fe79feafa03ea16cbc0f8a286641e2da3559bac91bdb13bd96",
+      "bytes": 50129134,
+      "entry": "libsherpa-onnx-c-api.so",
+      "files": [
+        { "from": "jni/x86_64/libsherpa-onnx-c-api.so" },
+        { "from": "jni/x86_64/libonnxruntime.so" }
+      ]
+    },
+    "linux_x64": {
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.8/sherpa-onnx-v1.13.8-linux-x64-shared-no-tts-lib.tar.bz2",
+      "sha256": "bf2d998c8b07012cd5098f3b92673bc1333fd9b927767d7cb664be8190d8bc0b",
+      "bytes": 9249201,
+      "entry": "libsherpa-onnx-c-api.so",
+      "files": [
+        { "from": "sherpa-onnx-v1.13.8-linux-x64-shared-no-tts-lib/lib/libsherpa-onnx-c-api.so" },
+        { "from": "sherpa-onnx-v1.13.8-linux-x64-shared-no-tts-lib/lib/libonnxruntime.so" }
+      ]
+    },
+    "macos_arm64": {
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.8/sherpa-onnx-v1.13.8-osx-universal2-shared-no-tts-lib.tar.bz2",
+      "sha256": "bdcc7c266d355697584dd4efb9dc766e45e18e87cec1fc553002a32cfcfab9a7",
+      "bytes": 17827519,
+      "entry": "libsherpa-onnx-c-api.dylib",
+      "files": [
+        { "from": "sherpa-onnx-v1.13.8-osx-universal2-shared-no-tts-lib/lib/libsherpa-onnx-c-api.dylib", "slice": "arm64" },
+        { "from": "sherpa-onnx-v1.13.8-osx-universal2-shared-no-tts-lib/lib/libonnxruntime.dylib", "slice": "arm64" }
+      ]
+    },
+    "macos_x64": {
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.8/sherpa-onnx-v1.13.8-osx-universal2-shared-no-tts-lib.tar.bz2",
+      "sha256": "bdcc7c266d355697584dd4efb9dc766e45e18e87cec1fc553002a32cfcfab9a7",
+      "bytes": 17827519,
+      "entry": "libsherpa-onnx-c-api.dylib",
+      "files": [
+        { "from": "sherpa-onnx-v1.13.8-osx-universal2-shared-no-tts-lib/lib/libsherpa-onnx-c-api.dylib", "slice": "x86_64" },
+        { "from": "sherpa-onnx-v1.13.8-osx-universal2-shared-no-tts-lib/lib/libonnxruntime.dylib", "slice": "x86_64" }
+      ]
+    }
+  }
+}

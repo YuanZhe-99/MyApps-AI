@@ -1,0 +1,7 @@
+analyzer:
+  exclude:
+    - build/**
+    - lib/src/*.g.dart
+  language:
+    strict-casts: true
+include: package:flutter_lints/flutter.yaml
