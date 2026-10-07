@@ -22,7 +22,7 @@ ASR 后端包测试运行各自的构建 hook，在 CI 主机上加载预构建�
 iOS 加载，其他平台的路线不可用。`asr-native-prebuild` 与 `asr-apple-prebuild` 工作流只
 构建上游未发布的二进制，需手动运行。
 
-llama.cpp 包测试检查清单、加载上游库，并在不加载的情况下检查缺失模型。设置
+llama.cpp 包测试检查清单、加载上游库，并在不加载的情况下检查缺失模型。`ggml_layout_test` 检查各平台查找 ggml 的位置（含 Android 库路径位于 APK 内的情况），并按分数选出最佳 CPU 变体。有模型时还检查 GPU 回退（已记录的失败与加载失败都在 CPU 上运行）和设备列表。设置
 `LLAMA_TEST_MODEL`（小型 GGUF 对话模型）后启用流式、确定性、token 上限、停止串、取消、
 忙碌、上下文上限和重新加载检查。同一应用进程不得加载两套不同的 ggml；捆绑 ggml 的包在
 其 ggml 对齐或隔离之前不得同时使用。

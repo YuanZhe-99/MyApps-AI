@@ -1,6 +1,6 @@
 name: myapps_ai_models
 description: Capability-neutral model artifact manifests, downloads, installation, leases and device-local engine state.
-version: 0.5.2
+version: 0.5.3
 publish_to: none
 environment:
   sdk: ^3.12.0

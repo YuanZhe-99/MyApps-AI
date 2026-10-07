@@ -130,6 +130,22 @@ class LlmMetrics {
   }
 }
 
+/// Which compute device a local backend may run a model on.
+enum LlmComputePreference {
+  /// The CPU only.
+  cpuOnly,
+
+  /// A GPU when the backend has one, falling back to the CPU when the GPU
+  /// fails to load the model or to run it.
+  auto;
+
+  /// Purpose: Parse a persisted preference.
+  /// Inputs: [value]. Returns: The preference; unrecognised reads as
+  /// [cpuOnly]. Side effects: None. Notes: None.
+  static LlmComputePreference parse(Object? value) =>
+      value == auto.name ? auto : cpuOnly;
+}
+
 /// Optional abilities a backend declares; nothing is implied by the protocol.
 enum LlmAbility { streaming, structuredOutput, tools, vision, embedding }
 

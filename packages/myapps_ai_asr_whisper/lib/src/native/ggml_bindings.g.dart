@@ -93,6 +93,21 @@ class GgmlBindings {
   late final _ggml_backend_dev_type = _ggml_backend_dev_type$1Ptr
       .asFunction<int Function(ffi.Pointer<ggml_backend_device>)>();
 
+  ffi.Pointer<ggml_backend_reg> ggml_backend_load(ffi.Pointer<ffi.Char> path) {
+    return _ggml_backend_load(path);
+  }
+
+  late final _ggml_backend_loadPtr =
+      _lookup<
+        ffi.NativeFunction<
+          ffi.Pointer<ggml_backend_reg> Function(ffi.Pointer<ffi.Char>)
+        >
+      >('ggml_backend_load');
+  late final _ggml_backend_load = _ggml_backend_loadPtr
+      .asFunction<
+        ffi.Pointer<ggml_backend_reg> Function(ffi.Pointer<ffi.Char>)
+      >();
+
   void ggml_backend_load_all_from_path(ffi.Pointer<ffi.Char> dir_path) {
     return _ggml_backend_load_all_from_path(dir_path);
   }
@@ -187,6 +202,8 @@ enum ggml_backend_dev_type {
 }
 
 final class ggml_backend_device extends ffi.Opaque {}
+
+final class ggml_backend_reg extends ffi.Opaque {}
 
 enum ggml_log_level {
   GGML_LOG_LEVEL_NONE(0),

@@ -151,6 +151,8 @@ Key；密钥由应用通过 `OnlineSecretReader` 提供。模板 ID `openai`、`
 `SherpaDiarizer` 读取由应用定位的模型。`FluidAudioEngine` 在神经网络引擎上运行
 Parakeet，运行位置为 `mixed`；`SystemRecognizerEngine` 将设备端识别器作为与模型无关的
 路线提供。Sherpa 与 Apple 窗口须运行结束后取消才生效。
+在 Android 上，whisper 引擎按 soname 打开 ggml，并按名称注册该集合中最佳的 CPU 变体及
+GPU 后端，因此无论应用是否解压原生库都能工作。
 
 ## 在线来源界面
 
@@ -169,8 +171,14 @@ MyApps-UI 输入组件，因此本包不依赖 MyApps-UI。保存时调用
 模板，按 `batchTokens` 分块解码提示，温度为零或 top-k 为一时使用贪心采样，流式输出 UTF-8
 安全的增量，并在回合结束、达到 token 上限或遇到停止串时结束，停止串本身不会输出。
 取消通过原生标志在预填充分块之间和 token 之间检查；`cancel` 在原生工作返回后完成。
-`status` 不加载模型即可报告 `modelMissing`。指标报告层被分配到的设备：`CPU`，仅在设置
-`gpu` 时为 GPU。`llamaModelPath` 解析清单中的 GGUF 文件，`llamaCppBackendId` 是清单中
+`status` 不加载模型即可报告 `modelMissing`。指标报告层被分配到的设备：`CPU` 或该 GPU 的 ggml 名称。
+`compute` 默认为 `LlmComputePreference.cpuOnly`，所有层、缓冲区和运算都留在 CPU。设为
+`auto` 时模型放到 ggml 列出的第一个 GPU；加载失败，或首次生成在输出任何文本前失败，会把
+模型移到 CPU，并把原因以 `gpuFailureKey` 记入 `gpuFailures`（默认 `MemoryLlamaGpuFailures`；
+应用保存在不同步的设备状态中），下次加载直接使用 CPU。`loadedModel.gpuFailure` 报告该原因。
+`devices` 列出 ggml 的设备；只有存在 GPU 设备且平台在 `llamaGpuVerifiedPlatforms`（Linux）
+中时，`gpuSelectable` 才为真。Android 的库从 APK 内部映射，因此按 soname 加载库、按名称
+加载 CPU 变体；`status` 会写明所选变体。`llamaModelPath` 解析清单中的 GGUF 文件，`llamaCppBackendId` 是清单中
 该后端的名称。每个包版本对应一个上游 release 的二进制、头文件和绑定，并与模型列表一同更新。
 
 `llamaModelCatalog` 列出支持的文本模型，均为固定到仓库提交并带 SHA-256 的单文件 GGUF 清单：

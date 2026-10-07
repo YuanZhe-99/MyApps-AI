@@ -127,19 +127,44 @@ class WhisperLibrary {
       // Another isolate of this process may have registered them already —
       // the whisper and Parakeet engines each have one — and registering them
       // twice would list every device twice.
-      final dir = libraryDirectory();
       final registered = _hasCpuDevice();
-      if (dir != null && !registered && !Platform.isMacOS && !Platform.isIOS) {
-        final native = dir.toNativeUtf8();
-        try {
-          ggml().ggml_backend_load_all_from_path(native.cast());
-        } finally {
-          calloc.free(native);
+      if (!registered && Platform.isAndroid) {
+        _registerAndroidBackends();
+      } else if (!registered && !Platform.isMacOS && !Platform.isIOS) {
+        final dir = libraryDirectory();
+        if (dir != null) {
+          final native = dir.toNativeUtf8();
+          try {
+            ggml().ggml_backend_load_all_from_path(native.cast());
+          } finally {
+            calloc.free(native);
+          }
         }
       }
       _loaded = true;
     }
     return ggml().ggml_backend_reg_count();
+  }
+
+  /// Purpose: Register the Android set's backends by name.
+  /// Inputs: None.
+  /// Returns: Nothing.
+  /// Side effects: Loads backend libraries into the process.
+  /// Notes: Internal helper used within this file only. Only the CPU variant
+  /// rated best for this CPU is registered, as ggml itself does for a
+  /// directory; a GPU backend registers only when its library is in the set.
+  static void _registerAndroidBackends() {
+    final abi = Abi.current() == Abi.androidX64 ? 'x64' : 'arm64';
+    final set = androidBackendLibraries[abi]!;
+    final best = bestCpuVariant(set.cpu);
+    for (final name in [?best, ...set.gpu]) {
+      final native = name.toNativeUtf8();
+      try {
+        ggml().ggml_backend_load(native.cast());
+      } finally {
+        calloc.free(native);
+      }
+    }
   }
 
   /// Purpose: Say whether ggml has a CPU device registered in this process.

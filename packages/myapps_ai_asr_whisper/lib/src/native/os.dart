@@ -77,20 +77,26 @@ Pointer<T> Function<T extends NativeType>(String) _lookupBeside({
   final path = _libraryPath();
   if (path == null) throw StateError('The whisper library is not loaded.');
   final dir = File(path).parent.path;
+  // Android maps libraries straight from the APK, so [path] can be
+  // `…/base.apk!/lib/arm64-v8a/libwhisper.so` where no file exists; the app's
+  // linker namespace finds them by soname whether or not they were extracted.
   final names = Platform.isMacOS || Platform.isIOS
-      ? [File(path).uri.pathSegments.last]
+      ? [path]
       : Platform.isWindows
-      ? windows
+      ? [for (final n in windows) '$dir\\$n']
       : Platform.isAndroid
       ? android
-      : linux;
-  final libraries = [
-    for (final name in names)
-      if (File('$dir${Platform.pathSeparator}$name').existsSync())
-        DynamicLibrary.open('$dir${Platform.pathSeparator}$name'),
-  ];
+      : [for (final n in linux) '$dir/$n'];
+  final libraries = <DynamicLibrary>[];
+  for (final name in names) {
+    try {
+      libraries.add(DynamicLibrary.open(name));
+    } on ArgumentError {
+      // Not in this binary set.
+    }
+  }
   if (libraries.isEmpty) {
-    throw StateError('None of ${names.join(', ')} is beside $path.');
+    throw StateError('None of ${names.join(', ')} could be opened.');
   }
   return <T extends NativeType>(String symbol) {
     for (final library in libraries) {
@@ -98,6 +104,76 @@ Pointer<T> Function<T extends NativeType>(String) _lookupBeside({
     }
     throw ArgumentError('No library beside $path exports $symbol.');
   };
+}
+
+/// ggml backend libraries of the Android sets (see `native/binaries.json`),
+/// by ABI, registered by name: Android cannot list a directory inside the APK.
+/// `cpu` are alternatives, of which [bestCpuVariant] picks one; `gpu` are
+/// each registered when present.
+const androidBackendLibraries = {
+  'arm64': (
+    cpu: [
+      'libggml-cpu-android_armv8.0_1.so',
+      'libggml-cpu-android_armv8.2_1.so',
+      'libggml-cpu-android_armv8.2_2.so',
+      'libggml-cpu-android_armv8.6_1.so',
+      'libggml-cpu-android_armv9.0_1.so',
+      'libggml-cpu-android_armv9.2_1.so',
+      'libggml-cpu-android_armv9.2_2.so',
+    ],
+    gpu: ['libggml-opencl.so', 'libggml-vulkan.so'],
+  ),
+  'x64': (
+    cpu: [
+      'libggml-cpu-x64.so',
+      'libggml-cpu-sse42.so',
+      'libggml-cpu-sandybridge.so',
+      'libggml-cpu-ivybridge.so',
+      'libggml-cpu-piledriver.so',
+      'libggml-cpu-haswell.so',
+      'libggml-cpu-skylakex.so',
+      'libggml-cpu-cannonlake.so',
+      'libggml-cpu-cascadelake.so',
+      'libggml-cpu-icelake.so',
+      'libggml-cpu-cooperlake.so',
+      'libggml-cpu-zen4.so',
+      'libggml-cpu-alderlake.so',
+      'libggml-cpu-sapphirerapids.so',
+    ],
+    gpu: <String>[],
+  ),
+};
+
+/// Purpose: The CPU variant among [candidates] that ggml rates highest here.
+/// Inputs: [candidates], library names the OS linker can find.
+/// Returns: The name, or null when none loads or this CPU runs none.
+/// Side effects: Opens and closes each candidate.
+/// Notes: What `ggml_backend_load_all_from_path` does over a directory: each
+/// variant exports `ggml_backend_score`, 0 when this CPU lacks an instruction
+/// it was built for, higher for more capable builds. A variant without the
+/// function is a single generic build and rates 1.
+String? bestCpuVariant(List<String> candidates) {
+  String? best;
+  var bestScore = 0;
+  for (final name in candidates) {
+    final DynamicLibrary library;
+    try {
+      library = DynamicLibrary.open(name);
+    } on ArgumentError {
+      continue;
+    }
+    try {
+      final score = library.providesSymbol('ggml_backend_score')
+          ? library.lookupFunction<Int Function(), int Function()>(
+              'ggml_backend_score',
+            )()
+          : 1;
+      if (score > bestScore) (best, bestScore) = (name, score);
+    } finally {
+      library.close();
+    }
+  }
+  return best;
 }
 
 /// Purpose: Report how much memory this process could still use.

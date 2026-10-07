@@ -139,6 +139,22 @@ void main() {
     );
   });
 
+  test('the compute preference reads back, unknown as CPU only', () {
+    for (final v in LlmComputePreference.values) {
+      expect(LlmComputePreference.parse(v.name), v);
+    }
+    expect(LlmComputePreference.parse('gpu'), LlmComputePreference.cpuOnly);
+    expect(LlmComputePreference.parse(null), LlmComputePreference.cpuOnly);
+    expect(
+      LlamaCppBackend(modelPath: '/m/a.gguf').compute,
+      LlmComputePreference.cpuOnly,
+    );
+    expect(
+      LlamaCppBackend(modelPath: '/m/a.gguf').gpuFailureKey,
+      'llama.cpp $llamaUpstreamTag|a.gguf',
+    );
+  });
+
   final model = Platform.environment['LLAMA_TEST_MODEL'];
   group('with a model', () {
     late LlamaCppBackend backend;
@@ -148,6 +164,52 @@ void main() {
       await backend.load();
     });
     tearDownAll(() => backend.dispose());
+
+    test('a GPU that failed before is skipped and the reason kept', () async {
+      final failures = MemoryLlamaGpuFailures();
+      final auto = LlamaCppBackend(
+        modelPath: model!,
+        contextTokens: 512,
+        compute: LlmComputePreference.auto,
+        gpuFailures: failures,
+      );
+      addTearDown(auto.dispose);
+      await failures.record(auto.gpuFailureKey, 'decode: test');
+      final (text, done) = await collectLlm(auto.generate(_ask('Say hi.')));
+      expect(text, isNotEmpty);
+      expect(done.metrics.device, 'CPU');
+      expect(auto.loadedModel!.gpuFailure, 'decode: test');
+    });
+
+    test('a GPU that fails to load moves the model to the CPU', () async {
+      final failures = MemoryLlamaGpuFailures();
+      final auto = LlamaCppBackend(
+        modelPath: model!,
+        contextTokens: 512,
+        compute: LlmComputePreference.auto,
+        gpuFailures: failures,
+      )..debugFailGpuLoad = true;
+      addTearDown(auto.dispose);
+      await auto.load();
+      expect(auto.loadedModel!.device, 'CPU');
+      expect(auto.loadedModel!.gpuFailure, 'load: debugFailGpuLoad');
+      expect(
+        await failures.reasonFor(auto.gpuFailureKey),
+        'load: debugFailGpuLoad',
+      );
+    });
+
+    test(
+      'lists the CPU device; a GPU is offered only where verified',
+      () async {
+        final devices = await backend.devices();
+        expect(devices.where((d) => d.type == 0), isNotEmpty);
+        if (!llamaGpuVerifiedPlatforms.contains(Platform.operatingSystem)) {
+          expect(await backend.gpuSelectable(), isFalse);
+        }
+        expect(llamaGpuVerifiedPlatforms, isNot(contains('android')));
+      },
+    );
 
     test('status is available once loaded', () async {
       final report = await backend.status();

@@ -1,7 +1,7 @@
 name: myapps_ai_asr_sherpa
 description: >-
   sherpa-onnx adapter for myapps_ai_asr (Qwen3-ASR) and optional speaker diarization: pinned prebuilt libraries fetched by hash in a build hook.
-version: 0.5.2
+version: 0.5.3
 publish_to: none
 environment:
   sdk: ^3.12.0

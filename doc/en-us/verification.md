@@ -28,7 +28,10 @@ The `asr-native-prebuild` and `asr-apple-prebuild` workflows build only binaries
 upstream does not publish, and run manually.
 
 The llama.cpp package test checks its manifest, loads the upstream library and checks
-a missing model without loading. `LLAMA_TEST_MODEL` (a small GGUF chat model) enables
+a missing model without loading. `ggml_layout_test` checks where ggml is looked for on
+each platform, including an Android library path inside the APK, and picks the best
+CPU variant by score. With a model it also checks the GPU fallback (a recorded
+failure and a failed load both run on the CPU) and the device list. `LLAMA_TEST_MODEL` (a small GGUF chat model) enables
 streaming, determinism, token limits, stop strings, cancellation, busy, context limit
 and reload checks. One application process must not load two different ggml sets;
 packages that bundle ggml are not combined until their sets are aligned or isolated.

@@ -190,6 +190,9 @@ as one untimed segment per window; `SherpaDiarizer` reads models located by the
 application. `FluidAudioEngine` runs Parakeet on the Neural Engine with `mixed`
 placement; `SystemRecognizerEngine` exposes the on-device recogniser as a
 model-independent route. Sherpa and Apple windows finish before a cancel takes effect.
+On Android the whisper engine opens ggml by soname and registers the best CPU variant
+and any GPU backend of its set by name, so it works whether or not the application
+extracts native libraries.
 
 ## Online sources UI
 
@@ -213,8 +216,17 @@ samples greedily when temperature is zero or top-k is one, streams UTF-8-safe de
 and ends at end of turn, the token limit or a stop string, which is never emitted.
 Cancellation is a native flag checked between prefill chunks and tokens; `cancel`
 completes after native work returns. `status` reports `modelMissing` without loading.
-Metrics report the device layers were assigned to: `CPU`, or a GPU only when `gpu`
-is set. `llamaModelPath` resolves a manifest's GGUF file and `llamaCppBackendId`
+Metrics report the device layers were assigned to: `CPU`, or the GPU's ggml name.
+`compute` is `LlmComputePreference.cpuOnly` by default, which keeps every layer,
+buffer and operation on the CPU. With `auto` the model goes to the first GPU ggml
+lists; a failed load, or a failed first generation before any text, moves it to the
+CPU and records the reason in `gpuFailures` (`MemoryLlamaGpuFailures` by default;
+applications keep it in unsynced device state) under `gpuFailureKey`, so the next
+load goes straight to the CPU. `loadedModel.gpuFailure` reports that reason.
+`devices` lists ggml's devices; `gpuSelectable` is true only when a GPU device exists
+and the platform is in `llamaGpuVerifiedPlatforms` (Linux). Android loads its
+libraries by soname and its CPU variant by name, because they are mapped from inside
+the APK; `status` names the variant it chose. `llamaModelPath` resolves a manifest's GGUF file and `llamaCppBackendId`
 names the backend in manifests. Binaries, headers and bindings come from one upstream
 release per package version and change together with the model list.
 

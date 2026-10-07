@@ -62,6 +62,7 @@ const _llamaFunctions = {
 const _ggmlFunctions = {
   'ggml_version',
   'ggml_commit',
+  'ggml_backend_load',
   'ggml_backend_load_all_from_path',
   'ggml_backend_reg_count',
   'ggml_backend_dev_count',

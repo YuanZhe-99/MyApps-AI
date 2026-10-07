@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.5.3 - 2026-10-07
+
+Fix: local models never loaded on Android. Applications package native libraries
+uncompressed inside the APK, where the llama library's reported path does not exist,
+so ggml was never found. `myapps_ai_llm_llama` and `myapps_ai_asr_whisper` now open
+ggml by soname on Android and register the best CPU variant by name (by its
+`ggml_backend_score`, as ggml does for a directory). Load failures are reported with
+their reason (`library`, `noCpuBackend`) in `status` instead of a bare `failed`.
+
+`LlamaCppBackend` replaces `gpu` with `compute` (`LlmComputePreference.cpuOnly`,
+the default, or `auto`). CPU only now passes an empty device list, so a registered
+GPU backend no longer receives compute buffers or offloaded operations. `auto` falls
+back to the CPU when the GPU fails to load the model or fails its first generation,
+and remembers that in `gpuFailures`. New `devices`, `gpuSelectable` and
+`llamaGpuVerifiedPlatforms` (Linux Vulkan, checked on an Intel iGPU).
+
 ## 0.5.2 - 2026-10-07
 
 Runtime readiness now comes from the injected backend on every platform, enabling

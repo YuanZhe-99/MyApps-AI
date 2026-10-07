@@ -56,6 +56,7 @@ const _parakeetFunctions = {
 /// on Apple, so they are looked up at run time rather than bound to an asset.
 const _ggmlFunctions = {
   'ggml_log_set',
+  'ggml_backend_load',
   'ggml_backend_load_all_from_path',
   'ggml_backend_reg_count',
   'ggml_backend_dev_count',

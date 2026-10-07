@@ -1,6 +1,6 @@
 name: myapps_ai_online
 description: Online AI providers, OpenAI-compatible LLM and transcription clients, templates and privacy notice models; pure Dart HTTP, no native code.
-version: 0.5.2
+version: 0.5.3
 publish_to: none
 environment:
   sdk: ^3.12.0

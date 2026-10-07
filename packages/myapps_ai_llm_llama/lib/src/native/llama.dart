@@ -10,12 +10,12 @@ library;
 
 import 'dart:convert';
 import 'dart:ffi';
-import 'dart:io';
 
 import 'package:ffi/ffi.dart';
 
 import '../ggml_bindings.g.dart';
-import '../llama_bindings.g.dart';
+import '../llama_bindings.g.dart' hide ggml_backend_device;
+import '../llama_bindings.g.dart' as llama show ggml_backend_device;
 import 'os.dart';
 
 /// ggml version the vendored headers and bindings describe; the loaded
@@ -31,8 +31,8 @@ class LlamaException implements Exception {
   /// Returns: Exception. Side effects: None. Notes: None.
   const LlamaException(this.kind, this.message);
 
-  /// Purpose: Failure class: `notBuilt`, `version`, `load`, `tooLong`,
-  /// `decode`. Inputs: None. Returns: String. Side effects: None.
+  /// Purpose: Failure class: `notBuilt`, `library`, `version`,
+  /// `noCpuBackend`, `load`, `tooLong`, `decode`. Inputs: None. Returns: String. Side effects: None.
   /// Notes: Plain string so it crosses isolates.
   final String kind;
 
@@ -82,15 +82,21 @@ class LlamaLibrary {
   /// Inputs: None.
   /// Returns: The ggml version, or null when this target has no library.
   /// Side effects: Loads native code; registers ggml backends.
-  /// Notes: Throws [LlamaException] (`version`) when the library is not the
-  /// one the bindings describe; nothing is called after that.
+  /// Notes: Throws [LlamaException]: `library` when ggml cannot be opened,
+  /// `version` when the library is not the one the bindings describe (nothing
+  /// is called after that), `noCpuBackend` when no CPU backend registers.
   static String? load() {
     try {
       llama_print_system_info();
     } on ArgumentError {
       return null;
     }
-    final bindings = ggml();
+    final GgmlBindings bindings;
+    try {
+      bindings = ggml();
+    } on StateError catch (e) {
+      throw LlamaException('library', e.message);
+    }
     final version = bindings.ggml_version().cast<Utf8>().toDartString();
     if (version != llamaGgmlVersion) {
       throw LlamaException(
@@ -100,24 +106,57 @@ class LlamaLibrary {
     }
     if (!_loaded) {
       // Apple's binary has its backends linked in; elsewhere the CPU variants
-      // are libraries beside llama's. Another isolate may have registered
-      // them already, and registering twice lists every device twice.
-      final dir = llamaLibraryDirectory();
-      if (dir != null &&
-          !Platform.isMacOS &&
-          !Platform.isIOS &&
-          !_hasCpuDevice(bindings)) {
-        final native = dir.toNativeUtf8();
-        try {
-          bindings.ggml_backend_load_all_from_path(native.cast());
-        } finally {
-          calloc.free(native);
-        }
+      // are separate libraries. Another isolate may have registered them
+      // already, and registering twice lists every device twice.
+      if (!_hasCpuDevice(bindings)) {
+        final layout = loadedGgmlLayout();
+        if (layout != null) _registerBackends(bindings, layout);
+      }
+      if (!_hasCpuDevice(bindings)) {
+        throw const LlamaException(
+          'noCpuBackend',
+          'ggml registered no CPU backend: none of its CPU libraries loaded.',
+        );
       }
       llama_backend_init();
       _loaded = true;
     }
     return version;
+  }
+
+  /// The CPU backend library [load] registered by name (Android), or null.
+  static String? _cpuLibrary;
+
+  /// Purpose: The CPU backend library chosen on Android, for diagnostics.
+  /// Inputs: None. Returns: The file name, or null where ggml chose it from
+  /// a directory or links it in. Side effects: None. Notes: Call [load] first.
+  static String? get cpuLibrary => _cpuLibrary;
+
+  /// Purpose: Register ggml's backends from [layout].
+  /// Inputs: [bindings], [layout]. Returns: Nothing.
+  /// Side effects: Loads backend libraries into the process.
+  /// Notes: Internal. Of named CPU variants only the one rated best for this
+  /// CPU is registered, as ggml itself does for a directory.
+  static void _registerBackends(GgmlBindings bindings, GgmlLayout layout) {
+    final dir = layout.backendDirectory;
+    if (dir != null) {
+      final native = dir.toNativeUtf8();
+      try {
+        bindings.ggml_backend_load_all_from_path(native.cast());
+      } finally {
+        calloc.free(native);
+      }
+    }
+    final best = bestCpuVariant(layout.cpuVariants);
+    if (best == null) return;
+    final native = best.toNativeUtf8();
+    try {
+      if (bindings.ggml_backend_load(native.cast()) != nullptr) {
+        _cpuLibrary = best;
+      }
+    } finally {
+      calloc.free(native);
+    }
   }
 
   /// Purpose: Whether ggml already has a CPU device in this process.
@@ -204,10 +243,24 @@ class LlamaSession {
     required int threads,
     bool gpu = false,
   }) {
-    final gpuDevice = gpu
-        ? LlamaLibrary.devices().where((d) => d.isGpu).firstOrNull
-        : null;
+    // The device list is always explicit: with ggml's default (null) llama
+    // also places compute buffers and offloaded ops on every GPU it finds,
+    // even with no layers there. An empty list keeps everything on the CPU.
+    final b = ggml();
+    Pointer<ggml_backend_device>? gpuDevice;
+    if (gpu) {
+      for (var i = 0; i < b.ggml_backend_dev_count(); i++) {
+        final d = b.ggml_backend_dev_get(i);
+        if (LlamaDevice('', '', b.ggml_backend_dev_type$1(d).value).isGpu) {
+          gpuDevice = d;
+          break;
+        }
+      }
+    }
+    final devices = calloc<Pointer<llama.ggml_backend_device>>(2);
+    if (gpuDevice != null) devices[0] = gpuDevice.cast();
     final mparams = llama_model_default_params()
+      ..devices = devices
       ..n_gpu_layers = gpuDevice == null ? 0 : 999;
     final native = path.toNativeUtf8();
     final Pointer<llama_model> model;
@@ -215,6 +268,7 @@ class LlamaSession {
       model = llama_model_load_from_file(native.cast(), mparams);
     } finally {
       calloc.free(native);
+      calloc.free(devices);
     }
     if (model == nullptr) {
       throw LlamaException('load', 'The model at $path did not load.');
@@ -235,7 +289,9 @@ class LlamaSession {
       model,
       ctx,
       llama_model_get_vocab(model),
-      gpuDevice?.name ?? 'CPU',
+      gpuDevice == null
+          ? 'CPU'
+          : b.ggml_backend_dev_name(gpuDevice).cast<Utf8>().toDartString(),
     );
   }
 
