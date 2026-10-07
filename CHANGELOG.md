@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.1 - 2026-10-06
+
+Dependency ranges instead of exact pins in the ASR and model packages, so they
+resolve on Flutter 3.44.2 used by consumer CI (`hooks 2.2.0` needed a newer SDK).
+
 ## 0.5.0 - 2026-10-06
 
 Breaking: backend contracts, execution gate, cache entries and output utilities
