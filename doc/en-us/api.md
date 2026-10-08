@@ -118,6 +118,12 @@ A throwing fixture becomes a `failed` record. System-managed catalog entries lis
 only the actions the platform supports; `pauseResume` appears only when the source
 supports it.
 
+`HuggingFaceModelSource` lists a repository's GGUF files at its current commit with
+their LFS SHA-256 and size (`parseHuggingFaceRepo` accepts `owner/name` or a link),
+reads a file's first bytes by range, and `HuggingFaceRepoListing.manifestFor` builds a
+manifest pinned to that commit and marked `custom`, so a user's model downloads and
+verifies like a recommended one. Split files are flagged and not offered.
+
 ## Source selection and unified settings
 
 `AiSourceOption` describes a registered source by id, `AiSourceKind` (auto, system,
@@ -134,6 +140,60 @@ one needing download or configuration, calls `onResolve` for navigation instead 
 acting silently. `MyAppsAiDiagnostics` groups untranslated lines per backend.
 `confirmClearAfterSourceChange` returns false on dismissal. `MyAppsAiManagementEntry`
 opens application-owned management routes.
+
+## Source routing
+
+`AiSourceRouter` (`myapps_ai_sources`) is an application's `CapabilityGenAiBackend`,
+`ModelManagementController`, `AiSourceController` and `CustomModelController`. It
+keeps the global selection, the GPU choice (`aiComputePreference`), GPU failures
+(`aiGpuFailures`), custom models (`aiCustomModels`) and aliases (`aiModelAliases`)
+in a device-local `AiSourceStore`; `CallbackAiSourceStore` reads before writing so
+other settings survive. Automatic and system use the system backend; a local id
+leases its installed model and runs `LlamaCppBackend` with the chosen compute
+preference; an online id goes to the injected `AiOnlineSources`. Nothing downloads
+implicitly, switching cancels then releases, and proofreading always uses system
+AI. For a local or online source `statusReport` puts the source id in `variant` and
+`baseModelName`, which applications store as the identity of what they generated,
+keeps the backend's `detail`, and on a resolution failure says why in `detail`
+(`modelNotInstalled`, `unknownSource`, `privacyNotice`, missing configuration).
+`sourceName` gives `Vendor: Model (QUANT)` or the alias.
+
+`MyAppsAiSourceSection` (`myapps_ai_ui`) renders the picker over any
+`AiSourceController`, the local-model and optional online-source entries and the
+GPU switch, which is enabled only where `gpuSelectable` is true and says why
+otherwise. Applications keep pausing their service around a switch and asking
+whether to clear old results.
+
+## Technical details
+
+`AiDiagnosticsReport` holds `AiDiagnosticSection`s of `AiDiagnosticRow`s with an
+`AiDiagnosticSeverity`; a row whose key names a secret (key, token, secret,
+password, authorization) keeps only whether a value exists. `toPlainText` renders
+the copy. `AiSourceRouter.diagnostics` lists every section the build includes,
+whatever is selected: application and platform (version, OS, ABI, processors),
+selection and overrides with the resolved status, system AI (status, AICore
+version, SDK, device, compatibility, locale support, proofreading), llama.cpp
+(upstream build, ggml version, library path and whether it is inside the APK,
+system info with CPU features, chosen CPU variant, every ggml device, whether a GPU
+is built, verified and selectable), each local model (state, size, hash prefix,
+minimum build and, when loaded, description, context, device, threads, load time,
+GPU fallback and the last first-token time and speed) and each online source
+(host, template, auth, key stored or not, privacy acknowledgement, models, last
+test or listing result). A backend the build lacks is an empty section, shown as
+"not included". `MyAppsAiDiagnosticsView` loads the report when expanded, colours
+warnings and errors, and copies the text.
+
+## Model naming
+
+`friendlyModelName` turns a raw id into OpenRouter's `Vendor: Model` by rule, so new
+models need no update: it drops `org/` prefixes (kept as vendor clues), Ollama
+`:latest`, dates and a repeated org in file names; turns preview, experimental,
+beta and alpha into suffixes; merges `5-5` into `5.5` and `qwen2-5` into `Qwen2.5`;
+upper-cases sizes and short version marks (`8B`, `A22B`, `R1`; `o3` stays); applies
+brand casing; and keeps casing the id already has. A catalog's vendor and name, then
+the `org/` prefix, then the name's prefix, then a hint decide the vendor.
+`artifactDisplayName` names local manifests from their `vendor`, `displayName` and
+`quantizationLabel` fields: `Qwen: Qwen3.5 0.8B (Q4_K_M)`.
 
 ## Text LLM
 
@@ -160,6 +220,27 @@ enabling a source, applications show an `OnlinePrivacyNotice`; the device-local
 acknowledgement is checked by `needsOnlinePrivacyAcknowledgement`, which also asks
 again when the recipient host changes.
 
+Since 0.6.0 a source holds several `OnlineModel`s (`models`): model name, alias,
+listed name, vendor, context length, inputs and origin (template, fetched, manual),
+with record ids `model:<source>:<model>` as in MyTranscribe and unknown fields
+kept. `modelId` stays the first model and is still written, so earlier builds read
+the record; a record without `models` yields its single `modelId`. A selection names
+one model as `online:model:<source>:<model>`; the 1.8.11 ids `provider:<id>` and
+`online:provider:<id>` mean the source's first model. `OnlineProviderTemplateRegistry.chat()`
+offers 31 templates sorted by name and never grouped by region; a provider with
+several sites has one template with `OnlineEndpointOption`s labelled in its own words
+(International (Singapore) / China (Beijing), Z.ai / BigModel) or by domain only.
+Templates carry an icon key, a models.dev catalog id and documentation; only OpenAI and
+OpenRouter are seeded. `fetchOnlineModels` reads `{data: []}`, Ollama's `{models: []}`
+and bare lists, OpenRouter's names, context lengths and modalities, and marks
+embedding, speech, image and moderation models as not chat models.
+`OnlineModelCatalog` is a models.dev snapshot (MIT, `tool/update_model_catalog.py`)
+used for names and context until a source lists its own models, and when it cannot.
+`OnlineSourceManager` implements `OnlineSourcesController` and `AiOnlineSources` over
+application configuration and secret callbacks: records, key presence, acknowledgements,
+model lists on request, one option per model, backends only after the notice is
+accepted, and per-source technical details. Nothing is fetched in the background.
+
 ## Local model management UI
 
 `MyAppsLocalModelsPage` and `MyAppsLocalModelList` render Settings → AI → Local models
@@ -169,7 +250,13 @@ appear. Entries show size, state, progress, errors and only offered actions
 (`visibleModelActions`). System-managed entries never offer verify or remove. Removal
 is confirmed and states that only downloaded files are removed while records and
 history remain. `initialEntryId` scrolls to and highlights an entry; `onInstalled`
-fires once per transition to installed so callers can resume configuration.
+fires once per transition to installed so callers can resume configuration. An
+optional `badge` label and `entryMenu` add, for example, "Unverified" and rename or
+remove controls. `MyAppsAddCustomModelPage` lists a Hugging Face repository's GGUF
+files through a `CustomModelController`, reads the chosen file's header with one
+ranged request, and shows a warning naming the architecture (supported, not supported
+or unknown), size, memory and license; the download stays disabled until the user
+ticks the acknowledgement.
 
 ## Speech recognition
 
@@ -208,6 +295,17 @@ calls `ensureOnlinePrivacyAcknowledged`, which shows
 `showOnlinePrivacyNoticeDialog` for an unconfirmed version or host; declining or
 dismissing saves nothing. Removal is confirmed first.
 
+Since 0.6.0 the list shows each source with its icon (LobeHub Icons, MIT, bundled as
+monochrome SVG through `flutter_svg`; initials otherwise) and its models beneath, and
+on windows 840 wide or more opens the editor beside the list. Adding opens a
+searchable template grid (`showOnlineTemplatePicker`). The editor offers an endpoint
+choice, documentation, the models list with rename and remove, "Fetch models" —
+after the privacy notice, with the catalog offered when the source cannot list them
+— and adding a model id; a new source without models lists them once after its first
+save. `showOnlineModelPicker` groups models by vendor, searches, and hides non-chat
+models unless shown. Both pickers open on the root navigator; `bottomPadding` keeps
+the list and editor clear of an application's floating navigation bar.
+
 ## llama.cpp
 
 `LlamaCppBackend` runs one GGUF file on a worker isolate that owns the model. It
@@ -226,7 +324,12 @@ load goes straight to the CPU. `loadedModel.gpuFailure` reports that reason.
 `devices` lists ggml's devices; `gpuSelectable` is true only when a GPU device exists
 and the platform is in `llamaGpuVerifiedPlatforms` (Linux). Android loads its
 libraries by soname and its CPU variant by name, because they are mapped from inside
-the APK; `status` names the variant it chose. `llamaModelPath` resolves a manifest's GGUF file and `llamaCppBackendId`
+the APK; `status` names the variant it chose. `llamaLibraryDiagnostics` reports the
+library without a model and `LlamaCppBackend.diagnostics` the loaded session.
+`readGgufHeader` reads a GGUF header from its first bytes (arrays skipped), giving
+architecture, name and context length; `architectureSupported` checks
+`llamaSupportedArchitectures`, generated for the pinned build by
+`tool/update_llama_architectures.py`. `llamaModelPath` resolves a manifest's GGUF file and `llamaCppBackendId`
 names the backend in manifests. Binaries, headers and bindings come from one upstream
 release per package version and change together with the model list.
 

@@ -8,6 +8,8 @@ library;
 import 'package:flutter/foundation.dart';
 import 'package:myapps_ai_core/myapps_ai_core.dart';
 
+import 'model.dart';
+
 /// Purpose: Read the API key for one provider.
 /// Inputs: `providerId` — the [OnlineProvider.id].
 /// Returns: The key, or null when none is stored.
@@ -65,6 +67,7 @@ const _knownKeys = {
   'extraHeaders',
   'requestTimeoutSeconds',
   'modelId',
+  'models',
 };
 
 /// One configured online provider.
@@ -87,12 +90,33 @@ class OnlineProvider {
     this.name = '',
     this.templateId,
     this.modelId,
+    List<OnlineModel> models = const [],
     this.authScheme = OnlineAuthScheme.bearer,
     this.authHeaderName,
     this.headers = const {},
     this.requestTimeoutSeconds = 600,
     this.extra = const {},
-  });
+    // Named parameters cannot be private, so this cannot be `this._models`.
+    // ignore: prefer_initializing_formals
+  }) : _models = models;
+
+  final List<OnlineModel> _models;
+
+  /// Purpose: The enabled models of this source.
+  /// Inputs: None. Returns: Models; a record from before multiple models
+  /// yields its single `modelId`. Side effects: None. Notes: None.
+  List<OnlineModel> get models => _models.isNotEmpty
+      ? _models
+      : [
+          if (modelId case final m? when m.trim().isNotEmpty)
+            OnlineModel(modelName: m.trim()),
+        ];
+
+  /// Purpose: This source narrowed to one model, for a backend.
+  /// Inputs: [model]. Returns: A copy whose `modelId` is [model]'s name.
+  /// Side effects: None. Notes: None.
+  OnlineProvider forModel(OnlineModel model) =>
+      copyWith(modelId: model.modelName);
 
   /// Stable record id.
   final String id;
@@ -243,6 +267,7 @@ class OnlineProvider {
     String? authHeaderName,
     Map<String, String>? headers,
     int? requestTimeoutSeconds,
+    List<OnlineModel>? models,
   }) => OnlineProvider(
     id: id,
     name: name ?? this.name,
@@ -250,6 +275,7 @@ class OnlineProvider {
     dialect: dialect ?? this.dialect,
     baseUrl: baseUrl ?? this.baseUrl,
     modelId: clearModelId ? null : (modelId ?? this.modelId),
+    models: models ?? _models,
     authScheme: authScheme ?? this.authScheme,
     authHeaderName: authHeaderName ?? this.authHeaderName,
     headers: headers ?? this.headers,
@@ -273,7 +299,9 @@ class OnlineProvider {
     if (authHeaderName != null) 'authHeaderName': authHeaderName,
     if (headers.isNotEmpty) 'extraHeaders': headers,
     'requestTimeoutSeconds': requestTimeoutSeconds,
-    if (modelId != null) 'modelId': modelId,
+    // `modelId` stays the first model so builds before 0.6.0 still work.
+    'modelId': ?(models.firstOrNull?.modelName ?? modelId),
+    if (_models.isNotEmpty) 'models': [for (final m in _models) m.toJson()],
   };
 
   /// Purpose: Read a record payload.
@@ -296,6 +324,10 @@ class OnlineProvider {
       ),
       baseUrl: _string(map['baseUrl']) ?? '',
       modelId: _string(map['modelId']),
+      models: [
+        if (map['models'] case final List list)
+          for (final m in list) ?OnlineModel.fromJson(m),
+      ],
       authScheme: OnlineAuthScheme.values.firstWhere(
         (a) => a.name == map['authScheme'],
         orElse: () => OnlineAuthScheme.bearer,

@@ -2,6 +2,9 @@ import 'package:flutter/widgets.dart';
 import 'package:myapps_ai_core/myapps_ai_core.dart';
 import 'package:myapps_ai_online/myapps_ai_online.dart';
 
+export 'package:myapps_ai_online/myapps_ai_online.dart'
+    show OnlineSourcesController;
+
 /// State of an explicit connection test.
 enum OnlineConnectionTestState {
   /// Not run since the editor opened or the draft changed.
@@ -15,80 +18,6 @@ enum OnlineConnectionTestState {
 
   /// The test failed.
   failure,
-}
-
-/// Application-owned storage behind the online sources pages.
-///
-/// The application keeps provider records, keys (through its secret channel)
-/// and device-local privacy acknowledgements; these pages only read and
-/// request changes.
-abstract interface class OnlineSourcesController {
-  /// Purpose: Configured providers in display order.
-  /// Inputs: None. Returns: List. Side effects: None.
-  /// Notes: Read again whenever [changes] notifies.
-  List<OnlineProvider> get providers;
-
-  /// Purpose: Notifies when [providers] or stored keys change.
-  /// Inputs: None. Returns: Listenable. Side effects: None. Notes: None.
-  Listenable get changes;
-
-  /// Purpose: Templates offered when adding a provider.
-  /// Inputs: None. Returns: Registry. Side effects: None. Notes: None.
-  OnlineProviderTemplateRegistry get templates;
-
-  /// Purpose: Create an id for a new provider record.
-  /// Inputs: None. Returns: A unique stable id such as `provider:<uuid>`.
-  /// Side effects: None. Notes: Seeded template ids are never reused.
-  String newProviderId();
-
-  /// Purpose: Whether a key is stored for a provider.
-  /// Inputs: [providerId]. Returns: bool.
-  /// Side effects: Reads the secret store. Notes: The key itself is never
-  /// shown again after saving.
-  Future<bool> hasKey(String providerId);
-
-  /// Purpose: Save a provider and optionally change its key.
-  /// Inputs: [provider]; [newKey] to store; [clearKey] to delete the stored
-  /// key. Returns: None.
-  /// Side effects: Writes records and secrets; may schedule sync.
-  /// Notes: Called only after any needed privacy acknowledgement.
-  Future<void> save(OnlineProvider provider, {String? newKey, bool clearKey});
-
-  /// Purpose: Delete a provider and its key.
-  /// Inputs: [providerId]. Returns: None.
-  /// Side effects: Writes records and secrets.
-  /// Notes: Selection that pointed at it falls back to the app's default.
-  Future<void> remove(String providerId);
-
-  /// Purpose: Test an unsaved draft.
-  /// Inputs: [draft]; [draftKey] typed but unsaved, or null to use the stored
-  /// key. Returns: The status report.
-  /// Side effects: One request to the draft's endpoint; sends no user content.
-  /// Notes: Usually `OpenAiCompatibleLlmBackend.testConnection`.
-  Future<GenAiStatusReport> testConnection(
-    OnlineProvider draft,
-    String? draftKey,
-  );
-
-  /// Purpose: Build the privacy notice for a provider.
-  /// Inputs: [provider]. Returns: The notice, or null when its host is
-  /// unknown (the provider cannot be enabled).
-  /// Side effects: None.
-  /// Notes: Usually [OnlinePrivacyNotice.forProvider] with the app's items.
-  OnlinePrivacyNotice? privacyNotice(OnlineProvider provider);
-
-  /// Purpose: Read this device's acknowledgement for a provider.
-  /// Inputs: [providerId]. Returns: The record or null.
-  /// Side effects: Reads device-local storage. Notes: Never synced.
-  Future<OnlinePrivacyAcknowledgement?> acknowledgement(String providerId);
-
-  /// Purpose: Store this device's acknowledgement for a provider.
-  /// Inputs: [providerId], [record]. Returns: None.
-  /// Side effects: Writes device-local storage. Notes: Never synced.
-  Future<void> acknowledge(
-    String providerId,
-    OnlinePrivacyAcknowledgement record,
-  );
 }
 
 /// Builds the endpoint input from the application's shared input widget.
@@ -181,6 +110,27 @@ class MyAppsOnlineLabels {
     required this.keySync,
     required this.onlyWhenSelected,
     required this.privacyConfirm,
+    required this.addSourceTitle,
+    required this.searchHint,
+    required this.endpointLabel,
+    required this.customEndpoint,
+    required this.docs,
+    required this.models,
+    required this.noModels,
+    required this.fetchModels,
+    required this.fetchFailed,
+    required this.fromCatalog,
+    required this.addModelId,
+    required this.modelIdHint,
+    required this.alias,
+    required this.aliasHint,
+    required this.originalId,
+    required this.showAllModels,
+    required this.contextTokens,
+    required this.selectModels,
+    required this.done,
+    required this.removeModel,
+    required this.localServer,
   });
 
   /// Purpose: Text when no provider exists. Inputs: None. Returns: String.
@@ -272,4 +222,88 @@ class MyAppsOnlineLabels {
   /// Purpose: Confirm button of the notice. Inputs: None. Returns: String.
   /// Side effects: None. Notes: None.
   final String privacyConfirm;
+
+  /// Purpose: Title of the template picker.
+  /// Inputs: None. Returns: Text. Side effects: None. Notes: None.
+  final String addSourceTitle;
+
+  /// Purpose: Hint of search fields.
+  /// Inputs: None. Returns: Text. Side effects: None. Notes: None.
+  final String searchHint;
+
+  /// Purpose: Label of the service-endpoint choice.
+  /// Inputs: None. Returns: Text. Side effects: None. Notes: None.
+  final String endpointLabel;
+
+  /// Purpose: Choice for typing another endpoint address.
+  /// Inputs: None. Returns: Text. Side effects: None. Notes: None.
+  final String customEndpoint;
+
+  /// Purpose: Label before the provider documentation address.
+  /// Inputs: None. Returns: Text. Side effects: None. Notes: None.
+  final String docs;
+
+  /// Purpose: Heading of a source's models.
+  /// Inputs: None. Returns: Text. Side effects: None. Notes: None.
+  final String models;
+
+  /// Purpose: Text when a source has no models yet.
+  /// Inputs: None. Returns: Text. Side effects: None. Notes: None.
+  final String noModels;
+
+  /// Purpose: Button that lists the source's models.
+  /// Inputs: None. Returns: Text. Side effects: None. Notes: None.
+  final String fetchModels;
+
+  /// Purpose: Text when listing models failed; the catalog is offered instead.
+  /// Inputs: None. Returns: Text. Side effects: None. Notes: None.
+  final String Function(String detail) fetchFailed;
+
+  /// Purpose: Note on models shown from the built-in catalog.
+  /// Inputs: None. Returns: Text. Side effects: None. Notes: None.
+  final String fromCatalog;
+
+  /// Purpose: Button and dialog title for typing a model id.
+  /// Inputs: None. Returns: Text. Side effects: None. Notes: None.
+  final String addModelId;
+
+  /// Purpose: Hint of the model id field.
+  /// Inputs: None. Returns: Text. Side effects: None. Notes: None.
+  final String modelIdHint;
+
+  /// Purpose: Label of the alias field.
+  /// Inputs: None. Returns: Text. Side effects: None. Notes: None.
+  final String alias;
+
+  /// Purpose: Hint of the alias field, saying the friendly name is used when empty.
+  /// Inputs: None. Returns: Text. Side effects: None. Notes: None.
+  final String aliasHint;
+
+  /// Purpose: Line showing a model's raw id.
+  /// Inputs: None. Returns: Text. Side effects: None. Notes: None.
+  final String Function(String id) originalId;
+
+  /// Purpose: Switch that also shows non-chat models.
+  /// Inputs: None. Returns: Text. Side effects: None. Notes: None.
+  final String showAllModels;
+
+  /// Purpose: Context length of a model.
+  /// Inputs: None. Returns: Text. Side effects: None. Notes: None.
+  final String Function(int tokens) contextTokens;
+
+  /// Purpose: Title of the model selection.
+  /// Inputs: None. Returns: Text. Side effects: None. Notes: None.
+  final String selectModels;
+
+  /// Purpose: Confirm button of the model selection.
+  /// Inputs: None. Returns: Text. Side effects: None. Notes: None.
+  final String done;
+
+  /// Purpose: Tooltip of a model's remove button.
+  /// Inputs: None. Returns: Text. Side effects: None. Notes: None.
+  final String removeModel;
+
+  /// Purpose: Badge for a server on the user's machine or network.
+  /// Inputs: None. Returns: Text. Side effects: None. Notes: None.
+  final String localServer;
 }

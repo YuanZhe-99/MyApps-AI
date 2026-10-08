@@ -15,7 +15,8 @@ The optional myapps_ai_ui package renders cards and settings with app-owned labe
 
 Optional capability packages: `myapps_ai_models` (model artifacts),
 `myapps_ai_llm` with the `myapps_ai_llm_llama` backend, `myapps_ai_asr` with the
-whisper.cpp, sherpa-onnx and Apple backends, and `myapps_ai_online`, plus the
+whisper.cpp, sherpa-onnx and Apple backends, `myapps_ai_online`, and
+`myapps_ai_sources`, which routes an application's AI to the chosen source, plus the
 `myapps_ai_local_ui` and `myapps_ai_online_ui` settings pages. Native backends use
 pinned upstream prebuilt binaries; nothing is compiled in a consumer build.
 

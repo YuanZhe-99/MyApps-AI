@@ -1,0 +1,25 @@
+name: myapps_ai_sources
+description: >-
+  Application AI source routing: the global source choice, local llama.cpp
+  models, optional online models, compute device and technical details.
+version: 0.6.0
+publish_to: none
+environment:
+  sdk: ^3.12.0
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.6.0
+  myapps_ai_core:
+    path: ../myapps_ai_core
+  myapps_ai_llm:
+    path: ../myapps_ai_llm
+  myapps_ai_llm_llama:
+    path: ../myapps_ai_llm_llama
+  myapps_ai_models:
+    path: ../myapps_ai_models
+dev_dependencies:
+  path: ^1.9.0
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

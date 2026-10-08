@@ -45,7 +45,13 @@ class MyAppsLocalModelLabels {
     this.leased,
     this.cancel,
     this.actionTooltip,
+    this.badge,
   });
+
+  /// Purpose: A short badge after an entry's name, such as "Unverified"
+  /// for a model the user added. Inputs: entry. Returns: Text or null.
+  /// Side effects: None. Notes: Optional.
+  final String? Function(ModelCatalogEntry entry)? badge;
 
   /// Purpose: Name an entry. Inputs: entry. Returns: String.
   /// Side effects: None. Notes: Usually resolved from the app's model record.

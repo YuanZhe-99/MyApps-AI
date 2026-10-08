@@ -12,6 +12,7 @@ import 'package:myapps_ai_models/myapps_ai_models.dart';
 import 'package:path/path.dart' as p;
 
 import 'native/llama.dart';
+import 'native/os.dart' show loadedLlamaLibraryPath;
 
 /// Backend id model manifests name for llama.cpp GGUF artifacts.
 const llamaCppBackendId = 'llama.cpp';
@@ -34,6 +35,59 @@ String? llamaModelPath(ArtifactManifest manifest, Directory artifactDir) {
 /// Platforms where the GPU route has been run end to end and may be offered;
 /// see [LlamaCppBackend.gpuSelectable].
 const llamaGpuVerifiedPlatforms = {'linux'};
+
+/// Purpose: Facts about the llama.cpp library in this build, for technical
+/// details.
+/// Inputs: None.
+/// Returns: Rows: upstream build, ggml version, where the library was loaded
+/// from, llama.cpp's system info (CPU features), the CPU variant chosen,
+/// every ggml device and whether a GPU may be offered; or a row saying the
+/// library is not built for this target, or why it failed to load.
+/// Side effects: Loads the library on a short-lived isolate; loads no model.
+/// Notes: Safe to call while a backend runs: registration is idempotent.
+Future<List<AiDiagnosticRow>> llamaLibraryDiagnostics() async {
+  final os = Platform.operatingSystem;
+  final rows = await Isolate.run(() {
+    try {
+      final version = LlamaLibrary.load();
+      if (version == null) return [AiDiagnosticRow('library', 'notBuilt')];
+      final path = loadedLlamaLibraryPath();
+      final devices = LlamaLibrary.devices();
+      return [
+        AiDiagnosticRow('upstream', llamaUpstreamTag),
+        AiDiagnosticRow('ggml', version),
+        AiDiagnosticRow('library', path),
+        if (path != null && path.contains('.apk!/'))
+          AiDiagnosticRow('libraryLocation', 'inside APK (loaded by soname)'),
+        AiDiagnosticRow('cpuVariant', LlamaLibrary.cpuLibrary ?? 'default'),
+        AiDiagnosticRow('systemInfo', LlamaLibrary.systemInfo().trim()),
+        for (final (i, d) in devices.indexed)
+          AiDiagnosticRow(
+            'device$i',
+            '${d.name} · ${switch (d.type) {
+              0 => 'CPU',
+              1 => 'GPU',
+              2 => 'iGPU',
+              _ => 'accelerator',
+            }} · ${d.description}',
+          ),
+        AiDiagnosticRow('gpuBuilt', devices.any((d) => d.isGpu)),
+      ];
+    } on LlamaException catch (e) {
+      return [
+        AiDiagnosticRow(
+          'library',
+          '${e.kind}: ${e.message}',
+          severity: AiDiagnosticSeverity.error,
+        ),
+      ];
+    }
+  });
+  return [
+    ...rows,
+    AiDiagnosticRow('gpuVerified', llamaGpuVerifiedPlatforms.contains(os)),
+  ];
+}
 
 /// Remembers the models a GPU failed to load or run on this device, so they
 /// go straight to the CPU next time.
@@ -155,6 +209,38 @@ class LlamaCppBackend implements LlmBackend {
   /// Why the GPU is not used for this model, when [compute] allowed it.
   String? _gpuFailure;
 
+  /// How long the last load took.
+  Duration? _loadTime;
+
+  /// Metrics of the last finished generation.
+  LlmMetrics? _lastMetrics;
+
+  /// Purpose: Facts about this backend for technical details.
+  /// Inputs: None. Returns: Rows: model file, compute preference, threads,
+  /// and once loaded the description, context, device, GPU failure, load
+  /// time and the last generation's first-token time and speed.
+  /// Side effects: None. Notes: Never prompts or generated text.
+  List<AiDiagnosticRow> get diagnostics => [
+    AiDiagnosticRow('modelFile', p.basename(modelPath)),
+    AiDiagnosticRow('compute', compute.name),
+    AiDiagnosticRow('threads', threads),
+    if (_loaded case final l?) ...[
+      AiDiagnosticRow('model', l.description),
+      AiDiagnosticRow('contextTokens', l.contextTokens),
+      AiDiagnosticRow('device', l.device),
+      if (_loadTime case final t?) AiDiagnosticRow('loadMs', t.inMilliseconds),
+    ] else
+      AiDiagnosticRow('loaded', false),
+    if (_gpuFailure case final f?)
+      AiDiagnosticRow('gpuFallback', f, severity: AiDiagnosticSeverity.warning),
+    if (_lastMetrics case final m?) ...[
+      if (m.firstToken case final t?)
+        AiDiagnosticRow('lastFirstTokenMs', t.inMilliseconds),
+      if (m.tokensPerSecond case final r?)
+        AiDiagnosticRow('lastTokensPerSecond', r.toStringAsFixed(1)),
+    ],
+  ];
+
   /// Purpose: Make every GPU load fail, to exercise the CPU fallback where
   /// no GPU exists. Inputs: None. Returns: bool. Side effects: None.
   /// Notes: Tests only.
@@ -223,6 +309,7 @@ class LlamaCppBackend implements LlmBackend {
       );
     }
     final worker = await _ensureWorker();
+    final started = Stopwatch()..start();
     var gpu = compute == LlmComputePreference.auto;
     if (gpu) {
       _gpuFailure = await gpuFailures.reasonFor(gpuFailureKey);
@@ -239,7 +326,10 @@ class LlamaCppBackend implements LlmBackend {
         _Load(modelPath, contextTokens, batchTokens, threads, false),
       );
     }
-    if (answer is _Loaded) return _loaded = answer;
+    if (answer is _Loaded) {
+      _loadTime = started.elapsed;
+      return _loaded = answer;
+    }
     final failure = _failureOf(answer);
     throw GenAiException(
       GenAiFailure.unavailable,
@@ -351,22 +441,20 @@ class LlamaCppBackend implements LlmBackend {
           if (!out.isClosed) out.add(LlmDelta(text));
         case _Finished f:
           replies.close();
+          final metrics = _lastMetrics = LlmMetrics(
+            device: loaded.device,
+            promptTokens: f.promptTokens,
+            outputTokens: f.outputTokens,
+            firstToken: first,
+            total: watch.elapsed,
+          );
           if (out.isClosed) break;
           out.add(
-            LlmDone(
-              switch (f.stop) {
-                'cancelled' => LlmFinish.cancelled,
-                'length' => LlmFinish.length,
-                _ => LlmFinish.stop,
-              },
-              LlmMetrics(
-                device: loaded.device,
-                promptTokens: f.promptTokens,
-                outputTokens: f.outputTokens,
-                firstToken: first,
-                total: watch.elapsed,
-              ),
-            ),
+            LlmDone(switch (f.stop) {
+              'cancelled' => LlmFinish.cancelled,
+              'length' => LlmFinish.length,
+              _ => LlmFinish.stop,
+            }, metrics),
           );
         case _Failure f:
           replies.close();

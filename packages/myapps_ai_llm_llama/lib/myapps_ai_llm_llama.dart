@@ -4,5 +4,6 @@ library;
 
 export 'src/backend.dart';
 export 'src/catalog.dart';
+export 'src/gguf.dart';
 export 'src/native/llama.dart'
     show LlamaDevice, LlamaLibrary, llamaGgmlVersion, llamaUpstreamTag;

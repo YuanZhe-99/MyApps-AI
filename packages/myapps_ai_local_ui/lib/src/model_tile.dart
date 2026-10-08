@@ -46,7 +46,12 @@ class MyAppsLocalModelTile extends StatelessWidget {
     this.highlighted = false,
     this.busy = false,
     this.error,
+    this.menu,
   });
+
+  /// Extra controls at the end of the row, such as rename or delete for a
+  /// model the user added; null for none.
+  final Widget? menu;
 
   /// Purpose: Entry shown. Inputs: None. Returns: Entry.
   /// Side effects: None. Notes: None.
@@ -139,7 +144,20 @@ class MyAppsLocalModelTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name, style: theme.textTheme.titleMedium),
+                  Wrap(
+                    spacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(name, style: theme.textTheme.titleMedium),
+                      if (labels.badge?.call(entry) case final badge?)
+                        Chip(
+                          label: Text(badge),
+                          visualDensity: VisualDensity.compact,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                        ),
+                    ],
+                  ),
                   Text(
                     [labels.state(entry.state), ?size].join(' · '),
                     style: theme.textTheme.bodyMedium?.copyWith(
@@ -205,6 +223,7 @@ class MyAppsLocalModelTile extends StatelessWidget {
                 ],
               ),
             ),
+            ?menu,
           ],
         ),
       ),

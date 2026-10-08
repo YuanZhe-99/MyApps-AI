@@ -44,7 +44,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [myapps_ai_core, myapps_ai, myapps_ai_models, myapps_ai_llm, myapps_ai_llm_llama, myapps_ai_asr, myapps_ai_asr_whisper, myapps_ai_asr_sherpa, myapps_ai_asr_apple, myapps_ai_online, myapps_ai_platform, myapps_ai_ui, myapps_ai_local_ui, myapps_ai_online_ui]
+        package: [myapps_ai_core, myapps_ai, myapps_ai_models, myapps_ai_llm, myapps_ai_llm_llama, myapps_ai_asr, myapps_ai_asr_whisper, myapps_ai_asr_sherpa, myapps_ai_asr_apple, myapps_ai_online, myapps_ai_platform, myapps_ai_ui, myapps_ai_local_ui, myapps_ai_online_ui, myapps_ai_sources]
     runs-on: ubuntu-latest
     defaults:
       run:

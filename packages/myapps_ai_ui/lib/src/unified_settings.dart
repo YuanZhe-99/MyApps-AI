@@ -124,12 +124,22 @@ class AiSourceLabels {
     required this.readiness,
     required this.followGlobal,
     required this.cancel,
+    this.sourceDetail,
+    this.sourceIcon,
   });
 
   final String Function(AiSourceOption option) sourceName;
   final String? Function(AiSourceReadiness readiness) readiness;
   final String followGlobal;
   final String cancel;
+
+  /// Secondary line for an option, such as the online source holding a
+  /// model; null for none.
+  final String? Function(AiSourceOption option)? sourceDetail;
+
+  /// Leading widget for an option, such as a provider icon; null for the
+  /// default radio mark only.
+  final Widget? Function(AiSourceOption option)? sourceIcon;
 }
 
 /// A settings row choosing one source, opening a dialog of registered options.
@@ -218,7 +228,11 @@ class MyAppsAiSourcePicker extends StatelessWidget {
           for (final o in options)
             _OptionTile(
               label: labels.sourceName(o),
-              hint: labels.readiness(o.readiness),
+              hint: [
+                ?labels.sourceDetail?.call(o),
+                ?labels.readiness(o.readiness),
+              ].join(' · '),
+              icon: labels.sourceIcon?.call(o),
               selected: o.id == selectedId,
               enabled: o.readiness != AiSourceReadiness.unavailable,
               onTap: () => Navigator.pop(context, o.id),
@@ -248,10 +262,12 @@ class _OptionTile extends StatelessWidget {
     required this.selected,
     required this.onTap,
     this.hint,
+    this.icon,
     this.enabled = true,
   });
   final String label;
   final String? hint;
+  final Widget? icon;
   final bool selected;
   final bool enabled;
   final VoidCallback onTap;
@@ -268,7 +284,8 @@ class _OptionTile extends StatelessWidget {
         selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
       ),
       title: Text(label),
-      subtitle: hint == null ? null : Text(hint!),
+      subtitle: hint == null || hint!.isEmpty ? null : Text(hint!),
+      trailing: icon,
       enabled: enabled,
       onTap: enabled ? onTap : null,
     ),

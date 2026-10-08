@@ -1,6 +1,6 @@
 name: myapps_ai_asr
 description: Backend-neutral speech recognition contracts, routes, fallback, crash isolation, diarization protocol and the ASR self-test; no native runtime.
-version: 0.5.3
+version: 0.6.0
 publish_to: none
 environment:
   sdk: ^3.12.0

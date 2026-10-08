@@ -210,15 +210,72 @@ String? serverMessage(String body) {
 /// One entry of a provider's model list.
 class OnlineModelEntry {
   /// Purpose: Create an entry.
-  /// Inputs: `id` — sent as `model`; `displayName` when distinct.
+  /// Inputs: `id` — sent as `model`; `displayName` when distinct; `vendor`;
+  /// `contextTokens`; `inputModalities`; `chat` — false for embedding,
+  /// speech, image and moderation models.
   /// Returns: Entry. Side effects: None. Notes: None.
-  const OnlineModelEntry(this.id, {this.displayName});
+  const OnlineModelEntry(
+    this.id, {
+    this.displayName,
+    this.vendor,
+    this.contextTokens,
+    this.inputModalities = const [],
+    this.chat = true,
+  });
 
   /// Model id.
   final String id;
 
   /// Friendlier name, or null.
   final String? displayName;
+
+  /// Maker, when a catalog knows it.
+  final String? vendor;
+
+  /// Context length, when listed.
+  final int? contextTokens;
+
+  /// Accepted inputs such as `text` and `image`, when listed.
+  final List<String> inputModalities;
+
+  /// Whether this is a text chat model.
+  final bool chat;
+
+  /// Purpose: Copy with catalog facts filled in where missing.
+  /// Inputs: Facts. Returns: Entry. Side effects: None. Notes: Listed facts
+  /// win over the catalog's.
+  OnlineModelEntry withFallback({
+    String? displayName,
+    String? vendor,
+    int? contextTokens,
+    List<String>? inputModalities,
+  }) => OnlineModelEntry(
+    id,
+    displayName: this.displayName ?? displayName,
+    vendor: this.vendor ?? vendor,
+    contextTokens: this.contextTokens ?? contextTokens,
+    inputModalities: this.inputModalities.isNotEmpty
+        ? this.inputModalities
+        : (inputModalities ?? const []),
+    chat: chat,
+  );
+}
+
+/// Model ids that are not chat models, by name.
+final _notChat = RegExp(
+  r'(embed|embedding|tts|whisper|transcri|dall-e|imagen|image-|moderation|'
+  r'rerank|realtime|speech|audio|davinci-002|babbage|sora|veo|lyria)',
+  caseSensitive: false,
+);
+
+/// Purpose: Whether a listed model is a text chat model.
+/// Inputs: [id]; [outputModalities] when listed. Returns: bool.
+/// Side effects: None. Notes: Listed outputs win; otherwise the id decides.
+bool isChatModel(String id, {List<String>? outputModalities}) {
+  if (outputModalities != null && outputModalities.isNotEmpty) {
+    return outputModalities.contains('text') && !_notChat.hasMatch(id);
+  }
+  return !_notChat.hasMatch(id);
 }
 
 /// Purpose: Fetch a provider's model list.
@@ -227,8 +284,10 @@ class OnlineModelEntry {
 /// `timeout` — defaults to the provider's `requestTimeoutSeconds`.
 /// Returns: Entries sorted by id, deduplicated.
 /// Side effects: One HTTP GET to the provider's own endpoint.
-/// Notes: Accepts `{"data": [...]}` or a bare list, entries keyed by `id`,
-/// `name` or `model`, as MyTranscribe's catalog fetcher. Throws
+/// Notes: Accepts `{"data": [...]}` (OpenAI, OpenRouter), `{"models": [...]}`
+/// (Ollama's `/api/tags`) or a bare list, entries keyed by `id`, `name` or
+/// `model`, as MyTranscribe's catalog fetcher; reads OpenRouter's `name`,
+/// `context_length` and `architecture` modalities. Throws
 /// [OnlineException]. Does not close `client`.
 Future<List<OnlineModelEntry>> fetchOnlineModels(
   http.Client client,
@@ -268,6 +327,7 @@ Future<List<OnlineModelEntry>> fetchOnlineModels(
   }
   final items = switch (decoded) {
     {'data': final List list} => list,
+    {'models': final List list} => list,
     final List list => list,
     _ => throw OnlineException(
       OnlineErrorKind.badResponse,
@@ -281,10 +341,26 @@ Future<List<OnlineModelEntry>> fetchOnlineModels(
     final id = item['id'] ?? item['name'] ?? item['model'];
     if (id is! String || id.trim().isEmpty || !seen.add(id)) continue;
     final name = item['name'];
+    final architecture = item['architecture'];
+    List<String> strings(Object? v) => [
+      if (v is List)
+        for (final s in v)
+          if (s is String) s,
+    ];
+    final inputs = architecture is Map
+        ? strings(architecture['input_modalities'])
+        : strings(item['input_modalities']);
+    final outputs = architecture is Map
+        ? strings(architecture['output_modalities'])
+        : strings(item['output_modalities']);
+    final context = item['context_length'] ?? item['context_window'];
     entries.add(
       OnlineModelEntry(
         id,
         displayName: name is String && name != id ? name : null,
+        contextTokens: context is int && context > 0 ? context : null,
+        inputModalities: inputs,
+        chat: isChatModel(id, outputModalities: outputs),
       ),
     );
   }

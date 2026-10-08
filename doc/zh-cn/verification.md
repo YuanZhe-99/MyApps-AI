@@ -10,6 +10,12 @@
 `python3 tool/check_consumer_resolution.py <dir>` 创建依赖全部包的应用，并在消费者使用的
 Flutter（3.44.2）上解析；依赖约束使用版本范围以便消费者解析。
 
+自 0.6.0 起：`model_naming_test` 检查 92 个真实与虚构 id；`myapps_ai_sources` 用假后端测试路由、
+持久化、GPU 选择、自定义模型与诊断，设置 `LLAMA_TEST_MODEL` 时还实际生成一次，并确认诊断不含提示文本；
+在线测试覆盖多模型记录及迁移、模型列表解析、目录、全部模板和管理器；部件测试覆盖来源区块、诊断复制、
+模板与模型选择、双栏来源库、服务端点选择和自定义模型警告。`check_dependencies.py` 还会在
+`myapps_ai_sources` 解析到 `myapps_ai_online` 时失败。
+
 ## 实现验收
 
 原生 CI 生成临时 Flutter 宿主，构建 Android ARM64 release APK，以及未签名 iOS

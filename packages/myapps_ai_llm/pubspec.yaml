@@ -1,6 +1,6 @@
 name: myapps_ai_llm
 description: Backend-neutral text LLM contracts and the GenAiBackend adapter; no native runtime.
-version: 0.5.3
+version: 0.6.0
 publish_to: none
 environment:
   sdk: ^3.12.0

@@ -25,6 +25,7 @@ MyApps-AI 提供可复用的系统设备端文本生成与校对基础设施。�
 | `myapps_ai_platform` | 可选的 Android ML Kit GenAI/AICore 与 Apple Foundation Models Flutter 原生桥接及 `MethodChannelGenAiBackend` |
 | `myapps_ai_ui` | 能力状态、下载、模型偏好、诊断详情及生成内容状态 |
 | `myapps_ai_local_ui` | 由 `ModelManagementController` 驱动的可选本地模型管理页面；仅依赖 `myapps_ai_models` |
+| `myapps_ai_sources` | 应用来源路由：一个全局来源，路由到系统 AI、llama.cpp 模型或注入的在线模型；本地与自定义 Hugging Face 模型目录、别名、GPU 选择与失败记录，以及完整技术详情；不依赖 `myapps_ai_online` |
 | `myapps_ai_online_ui` | 可选在线来源页面：来源列表、编辑、密钥输入、主动连接测试和隐私提醒；存储、文案及 MyApps-UI 输入组件由应用注入 |
 
 依赖单向：`myapps_ai_ui → myapps_ai → myapps_ai_core`，`myapps_ai_platform →

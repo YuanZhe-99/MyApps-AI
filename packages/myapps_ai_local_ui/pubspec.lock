@@ -169,7 +169,7 @@ packages:
       path: "../myapps_ai_models"
       relative: true
     source: path
-    version: "0.5.3"
+    version: "0.6.0"
   path:
     dependency: transitive
     description:

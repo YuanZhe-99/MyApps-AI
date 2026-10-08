@@ -7,6 +7,9 @@ import subprocess
 # Packages that must stay free of native plugins and concrete backends.
 NEUTRAL = ["myapps_ai_core", "myapps_ai", "myapps_ai_models", "myapps_ai_llm", "myapps_ai_asr", "myapps_ai_online", "myapps_ai_ui", "myapps_ai_local_ui", "myapps_ai_online_ui"]
 FORBIDDEN_PREFIXES = ("myapps_ai_platform", "myapps_ai_asr_", "myapps_ai_llm_")
+# Packages that must not pull in online support: an application without
+# online sources must not ship an online client or provider icons.
+OFFLINE = {"myapps_ai_sources": ("myapps_ai_online",)}
 
 
 def closure(package_dir):
@@ -31,7 +34,14 @@ def main():
         pubspec = (package_dir / "pubspec.yaml").read_text()
         if "\n  plugin:" in pubspec:
             raise ValueError(f"{name} declares a Flutter plugin")
-    print(f"Dependency isolation verified: {', '.join(NEUTRAL)}")
+    for name, forbidden in OFFLINE.items():
+        package_dir = root / name
+        subprocess.run(["flutter", "pub", "get"], cwd=package_dir, check=True,
+                       capture_output=True)
+        found = sorted(d for d in closure(package_dir) if d.startswith(forbidden))
+        if found:
+            raise ValueError(f"{name} resolves online packages: {found}")
+    print(f"Dependency isolation verified: {', '.join([*NEUTRAL, *OFFLINE])}")
 
 
 if __name__ == "__main__":

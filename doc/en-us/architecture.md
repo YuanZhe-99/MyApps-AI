@@ -27,6 +27,7 @@ and callbacks. Apps keep their own routes, providers and teaching presentation.
 | `myapps_ai_platform` | Optional Flutter native bridge and `MethodChannelGenAiBackend` for Android ML Kit GenAI/AICore and Apple Foundation Models |
 | `myapps_ai_ui` | Capability status, downloads, model preferences, diagnostic details and generated-content states |
 | `myapps_ai_local_ui` | Optional local model management page driven by `ModelManagementController`; depends only on `myapps_ai_models` |
+| `myapps_ai_sources` | Application source routing: one global source routed to system AI, a llama.cpp model or an injected online model; local and custom Hugging Face model catalog, aliases, GPU choice and failures, and complete technical details; never depends on `myapps_ai_online` |
 | `myapps_ai_online_ui` | Optional online sources pages: provider list, editor, key entry, explicit connection test and privacy notice; storage, wording and MyApps-UI input widgets injected by the application |
 
 Dependencies point one way: `myapps_ai_ui → myapps_ai → myapps_ai_core`, and

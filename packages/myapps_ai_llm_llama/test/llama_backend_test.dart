@@ -70,6 +70,23 @@ void main() {
     expect(llamaModelPath(manifest('model.bin'), dir), isNull);
   });
 
+  test('catalog models have OpenRouter-style names', () {
+    expect(llamaModelCatalog.map(artifactDisplayName), [
+      'Qwen: Qwen3.5 0.8B (Q4_K_M)',
+      'Qwen: Qwen3.5 2B (Q4_K_M)',
+      'Google: Gemma 4 E2B (Q4_0 QAT)',
+    ]);
+  });
+
+  test('library diagnostics name the build, version and CPU device', () async {
+    final rows = {for (final r in await llamaLibraryDiagnostics()) r.key: r};
+    expect(rows['upstream']!.value, llamaUpstreamTag);
+    expect(rows['ggml']!.value, llamaGgmlVersion);
+    expect(rows['systemInfo']!.value, isNotEmpty);
+    expect(rows['device0']!.value, contains('CPU'));
+    expect(rows['gpuVerified']!.value, isIn(['true', 'false']));
+  });
+
   test('the catalog lists the supported 4-bit models, pinned', () {
     expect(llamaModelCatalog.map((m) => m.modelId), [
       'local:qwen3.5-0.8b',
@@ -193,6 +210,10 @@ void main() {
       await auto.load();
       expect(auto.loadedModel!.device, 'CPU');
       expect(auto.loadedModel!.gpuFailure, 'load: debugFailGpuLoad');
+      final rows = {for (final r in auto.diagnostics) r.key: r};
+      expect(rows['device']!.value, 'CPU');
+      expect(rows['gpuFallback']!.severity, AiDiagnosticSeverity.warning);
+      expect(int.parse(rows['loadMs']!.value), greaterThanOrEqualTo(0));
       expect(
         await failures.reasonFor(auto.gpuFailureKey),
         'load: debugFailGpuLoad',

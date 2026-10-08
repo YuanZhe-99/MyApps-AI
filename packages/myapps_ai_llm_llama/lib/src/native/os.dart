@@ -84,6 +84,12 @@ GgmlLayout? loadedGgmlLayout() {
   return path == null ? null : ggmlLayout(path, os: Platform.operatingSystem);
 }
 
+/// Purpose: The file the llama library was loaded from, for diagnostics.
+/// Inputs: None. Returns: The path, or null when the OS will not say.
+/// Side effects: Loads the library if it was not loaded yet.
+/// Notes: On Android it may be inside the APK (`…/base.apk!/lib/…`).
+String? loadedLlamaLibraryPath() => _libraryPath();
+
 /// Purpose: The ggml functions, from whichever loaded library exports them.
 /// Inputs: None.
 /// Returns: The bindings.

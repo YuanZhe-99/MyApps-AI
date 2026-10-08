@@ -12,6 +12,15 @@ with ffigen 22 requires. `python3 tool/check_consumer_resolution.py <dir>` creat
 application depending on every package and resolves it on the consumers' Flutter
 (3.44.2); dependency constraints are ranges so consumers can resolve them.
 
+Since 0.6.0: `model_naming_test` checks 92 real and invented ids; `myapps_ai_sources`
+tests routing, persistence, GPU choice, custom models and diagnostics with fakes and,
+with `LLAMA_TEST_MODEL`, a real generation whose diagnostics contain no prompt text;
+online tests cover the multi-model record and its migration, model-list parsing, the
+catalog, every template and the manager; widget tests cover the source section,
+diagnostics copy, template and model pickers, the two-pane library, the endpoint
+choice and the custom-model warning. `check_dependencies.py` also fails if
+`myapps_ai_sources` resolves `myapps_ai_online`.
+
 ## Implementation acceptance
 
 Native CI generates an ephemeral Flutter host and builds an Android ARM64 release

@@ -17,6 +17,9 @@ ArtifactManifest _gguf({
   required String quantization,
   required String attribution,
   required int minimumBuild,
+  required String vendor,
+  required String name,
+  String? quantizationLabel,
 }) => ArtifactManifest(
   artifactId: artifactId,
   modelId: modelId,
@@ -35,7 +38,12 @@ ArtifactManifest _gguf({
   licenseId: 'Apache-2.0',
   licenseUrl: 'https://www.apache.org/licenses/LICENSE-2.0',
   attribution: attribution,
-  extraJson: {llamaMinimumBuildKey: minimumBuild},
+  extraJson: {
+    llamaMinimumBuildKey: minimumBuild,
+    artifactVendorKey: vendor,
+    artifactNameKey: name,
+    artifactQuantizationLabelKey: ?quantizationLabel,
+  },
 );
 
 /// Manifest field holding the first llama.cpp build that loads the model's
@@ -79,6 +87,8 @@ final qwen35_08bQ4 = _gguf(
   sha256: 'fb044e93939a70469c905781334f5de1e6c8b608ced6cbc8c9249bd4127d9526',
   quantization: 'q4_k_m',
   minimumBuild: 7990,
+  vendor: 'Qwen',
+  name: 'Qwen3.5 0.8B',
   attribution:
       'Qwen3.5-0.8B by the Qwen team, Alibaba Cloud, Apache-2.0; '
       'GGUF quantization by bartowski.',
@@ -95,6 +105,8 @@ final qwen35_2bQ4 = _gguf(
   sha256: '57a1085840f497d764a7fc5d346922dbde961efb54cc792ea81d694fd846a1d8',
   quantization: 'q4_k_m',
   minimumBuild: 7990,
+  vendor: 'Qwen',
+  name: 'Qwen3.5 2B',
   attribution:
       'Qwen3.5-2B by the Qwen team, Alibaba Cloud, Apache-2.0; '
       'GGUF quantization by bartowski.',
@@ -111,6 +123,9 @@ final gemma4E2bQ4 = _gguf(
   sha256: 'fa401b55b07ee70a54c6dae3903c783a6e65064312529ea57175cb5f8dec6634',
   quantization: 'q4_0',
   minimumBuild: 8637,
+  vendor: 'Google',
+  name: 'Gemma 4 E2B',
+  quantizationLabel: 'Q4_0 QAT',
   attribution: 'Gemma 4 E2B by Google, Apache-2.0; QAT GGUF by Google.',
 );
 

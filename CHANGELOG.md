@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.6.0 - 2026-10-08
+
+Breaking: applications replace their own source routing with `AiSourceRouter` from
+the new `myapps_ai_sources` package and their source controls with
+`MyAppsAiSourceSection`; `OnlineSourcesController` moved to `myapps_ai_online`
+(re-exported by `myapps_ai_online_ui`) and gained `fetchModels` and
+`catalogModels`; `MyAppsOnlineLabels` gained the strings of the new pages.
+
+Sources and settings: one router for system AI, llama.cpp models and online models,
+with device-local selection, GPU choice and failure memory, aliases and custom
+models; a resolution failure now says why. `MyAppsAiSourceSection` adds the GPU
+switch, enabled only where verified. Technical details are a structured
+`AiDiagnosticsReport` listing every included backend whatever is selected — app and
+platform, system AI, llama.cpp library and devices, every local model and its last
+session, every online source — with secrets reduced to present/absent, shown by
+`MyAppsAiDiagnosticsView` with copy.
+
+Online sources: a source holds several models (`OnlineModel`, ids as in
+MyTranscribe); records stay readable by earlier builds and old selections keep
+working. 31 templates in a flat, searchable list with provider icons (LobeHub Icons,
+MIT, via `flutter_svg`) and endpoints labelled in each provider's own words; model
+lists only on request, enriched from a bundled models.dev snapshot that also stands
+in when a source cannot list; rule-based `Vendor: Model` names with user aliases;
+`OnlineSourceManager` replaces each application's online storage class. The pages
+list models under their source, open the editor beside the list on wide windows and
+choose models from a grouped, searchable picker.
+
+Local models: recommended models are named `Qwen: Qwen3.5 0.8B (Q4_K_M)` and
+`Google: Gemma 4 E2B (Q4_0 QAT)`. Users may add a GGUF file from Hugging Face: the
+file is pinned to the repository's commit and verified by its LFS SHA-256, its
+header is read before downloading, and a warning naming the architecture (checked
+against the pinned llama.cpp's list), size and license must be accepted first.
+
 ## 0.5.3 - 2026-10-07
 
 Fix: local models never loaded on Android. Applications package native libraries

@@ -2,7 +2,7 @@ name: myapps_ai_llm_llama
 description: >-
   llama.cpp LLM backend: upstream's pinned prebuilt libraries, fetched by
   hash in a build hook and bound directly from Dart.
-version: 0.5.3
+version: 0.6.0
 publish_to: none
 environment:
   sdk: ^3.12.0

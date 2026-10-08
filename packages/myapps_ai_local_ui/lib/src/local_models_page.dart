@@ -31,6 +31,7 @@ class MyAppsLocalModelList extends StatefulWidget {
     required this.formatBytes,
     this.initialEntryId,
     this.onInstalled,
+    this.entryMenu,
     this.padding = const EdgeInsetsDirectional.only(bottom: 16),
   });
 
@@ -59,6 +60,10 @@ class MyAppsLocalModelList extends StatefulWidget {
   /// Notes: Fires once per transition into installed, never for entries
   /// already installed when the list mounted.
   final ValueChanged<String>? onInstalled;
+
+  /// Extra controls for an entry, such as rename and delete for a model the
+  /// user added; null for none.
+  final Widget? Function(ModelCatalogEntry entry)? entryMenu;
 
   /// Purpose: Content padding. Inputs: None. Returns: Insets.
   /// Side effects: None. Notes: None.
@@ -249,6 +254,7 @@ class _MyAppsLocalModelListState extends State<MyAppsLocalModelList> {
             busy: _pending.contains(entry.modelId),
             error: _errors[entry.modelId],
             onAction: (action) => _perform(entry, action),
+            menu: widget.entryMenu?.call(entry),
           ),
         );
       }

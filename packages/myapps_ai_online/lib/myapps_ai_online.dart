@@ -5,8 +5,12 @@ library;
 
 import 'package:myapps_ai_llm/myapps_ai_llm.dart' show LlmBackend;
 
+export 'src/catalog.dart';
+export 'src/controller.dart';
 export 'src/http_support.dart';
 export 'src/llm_backend.dart';
+export 'src/manager.dart';
+export 'src/model.dart';
 export 'src/privacy_notice.dart';
 export 'src/provider.dart';
 export 'src/templates.dart';
