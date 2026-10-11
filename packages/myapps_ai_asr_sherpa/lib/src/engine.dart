@@ -81,6 +81,9 @@ class SherpaOnnxEngine implements AsrEngine {
 
   @override
   Future<List<AsrRoute>> probe(List<ArtifactManifest> manifests) async {
+    if (!manifests.any((manifest) => manifest.backendId == adapterId)) {
+      return const [];
+    }
     final version = await runtime();
     return [
       for (final manifest in manifests)

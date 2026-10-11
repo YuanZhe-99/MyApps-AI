@@ -114,7 +114,13 @@ class SelfTestRunner {
   /// marker, writes the record.
   /// Notes: Errors become a failed record, never an exception, so a throwing
   /// check does not leave the route unchecked forever.
-  Future<SelfTestRecord> run<R>(SelfTestFixture<R> fixture) async {
+  Future<SelfTestRecord> run<R>(SelfTestFixture<R> fixture) =>
+      _store.runExclusive(() => _run(fixture));
+
+  /// Purpose: Execute a fixture while owning the native-work queue.
+  /// Inputs: [fixture]. Returns: Saved result. Side effects: Native work and state.
+  /// Notes: Release completes before the marker and queue are released.
+  Future<SelfTestRecord> _run<R>(SelfTestFixture<R> fixture) async {
     final fingerprint = fixture.fingerprint;
     SelfTestRecord record;
     await _store.markInFlight(

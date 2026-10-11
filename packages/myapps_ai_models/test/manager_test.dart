@@ -124,6 +124,50 @@ void main() {
     expect(Directory('${models.path}/bad').existsSync(), isFalse);
   });
 
+  test('tar.bz2 extraction yields and cancelled archive is reusable', () async {
+    final bytes = payload(2 * 1024 * 1024);
+    final tar = TarEncoder().encode(
+      Archive()..addFile(ArchiveFile('model.bin', bytes.length, bytes)),
+    );
+    final compressed = BZip2Encoder().encode(tar);
+    final file = host.serve(
+      'model.tar.bz2',
+      compressed,
+      unpack: ArchiveKind.tarBz2,
+    );
+    final manifest = manifestOf('qwen', [file]);
+    final manager = managerFor();
+    final cancel = DownloadCancelToken();
+    var yielded = false;
+    await expectLater(
+      manager.install(
+        manifest,
+        cancel: cancel,
+        onProgress: (p) {
+          if (p.stage == InstallStage.unpacking) {
+            Timer.run(() {
+              yielded = true;
+              cancel.cancel();
+            });
+          }
+        },
+      ),
+      failsWith(ArtifactFailure.cancelled),
+    );
+    expect(yielded, isTrue);
+    expect(await manager.installed('qwen'), isNull);
+    expect(await (await manager.partialFile('qwen', file)).exists(), isTrue);
+    expect(
+      File('${models.path}/.downloads/qwen.staging.tar').existsSync(),
+      isFalse,
+    );
+    final requests = host.requests.length;
+    final installed = await manager.install(manifest);
+    expect(host.requests.length, requests);
+    expect(installed.installed.single.sha256, sha(bytes));
+    expect(await manager.verify('qwen'), isTrue);
+  });
+
   test('free-space probe refuses before downloading', () async {
     final file = host.serve('m.gguf', payload(100));
     await expectLater(

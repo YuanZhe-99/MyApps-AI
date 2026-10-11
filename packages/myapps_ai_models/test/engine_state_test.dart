@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -212,6 +213,31 @@ void main() {
     expect(state.outcomeFor(_fp), SelfTestOutcome.passed);
     expect(state.staleFor('llama_cpp:qwen:cpu', newDriver), [_fp.encode()]);
   });
+
+  test(
+    'native work is serialized and an error does not poison the queue',
+    () async {
+      final entered = Completer<void>();
+      final release = Completer<void>();
+      var secondRan = false;
+      final first = store.runExclusive(() async {
+        entered.complete();
+        await release.future;
+        throw StateError('native failure');
+      });
+      final checked = expectLater(first, throwsStateError);
+      await entered.future;
+      final second = store.runExclusive(() async {
+        secondRan = true;
+        return 42;
+      });
+      await Future<void>.delayed(Duration.zero);
+      expect(secondRan, isFalse);
+      release.complete();
+      await checked;
+      expect(await second, 42);
+    },
+  );
 
   test('a throwing fixture is a failed record, never an exception', () async {
     final runner = SelfTestRunner(store: store);

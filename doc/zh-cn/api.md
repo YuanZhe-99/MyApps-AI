@@ -88,6 +88,14 @@ myapps_ai_ui 导出 MyAppsAiInsightCard、AiInsightSection 和 AiInsightLabels�
 安装在 `.downloads/<artifactId>.staging` 中暂存。没有可读清单的目录视为未安装。
 哈希错误时删除部分文件，取消或网络失败时保留部分文件以便续传。改名失败时恢复旧版本。
 同一制品的第二次安装请求返回正在执行的 future。
+压缩包解码与文件哈希在后台 isolate 执行。解压使用有界文件流，临时 tar 位于
+暂存目录旁，并计入空间预算。解码、提取、哈希阶段之间及发布前检查取消请求；
+已校验的下载文件在取消后保留供重用。
+`LocalEngineStateStore.runExclusive` 将原生调用与磁盘写入分别排队。自检和 ASR
+崩溃守卫使用该队列，使一次操作在原生调用及清理返回前独占崩溃标记。
+Whisper 和 Sherpa 在没有匹配的已安装清单时不初始化原生库。
+`NativeWorker` 在退出、错误或显式关闭时完成待处理请求。isolate 不能隔离原生进程崩溃，
+阻塞的原生调用必须返回后才能释放句柄。解压取消等待当前阶段结束，不在文件解码中途打断。
 
 状态文件在 `smokeTests` 下保存自检记录，在 `inFlight` 下保存标记，其余顶层字段原样保留。
 宽松的 `load` 把无法解析的内容视为空，不改名。下一次 `update` 写入前将文件改名为

@@ -107,6 +107,18 @@ in `<artifactId>/` with `manifest.json`; partial downloads live in
 not installed. A wrong hash deletes the partial, and a cancel or network failure
 keeps it for resumption. A failed rename restores the previous version.
 A second install request for the same artifact returns the running future.
+Archive decoding and file hashing run on background isolates. Extraction uses
+bounded file streams and a temporary tar beside the staging directory, included in
+the space budget. Cancellation is checked between decode/extract/hash phases and
+before publication; the verified download survives cancellation for reuse.
+`LocalEngineStateStore.runExclusive` queues native operations separately from disk
+writes. Self-tests and ASR crash guards use it so one operation owns the crash marker
+until native work and cleanup return. Whisper and Sherpa probes with no matching
+installed manifests do not initialize native libraries.
+`NativeWorker` settles pending requests on exit, error or explicit close. Isolates
+do not contain native process crashes; a blocked native call must finish before
+its handles are released. Cancellation during extraction waits for the current
+phase; it does not interrupt a decoder in the middle of a file.
 
 The state file keeps self-test records under `smokeTests` and the marker under
 `inFlight`. Every other top-level field is preserved verbatim. A lenient `load`

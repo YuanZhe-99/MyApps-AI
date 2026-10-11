@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
@@ -259,9 +260,13 @@ class ArtifactDownloader {
 /// Purpose: Compute a file's SHA-256 without reading it into memory.
 /// Inputs: [file]. Returns: Lower-case hex digest.
 /// Side effects: Reads the file.
-/// Notes: Streams, because artifacts reach gigabytes.
-Future<String> hashFile(File file) async =>
-    (await sha256.bind(file.openRead()).first).toString();
+/// Notes: Streams on a background isolate because artifacts reach gigabytes.
+Future<String> hashFile(File file) {
+  final path = file.path;
+  return Isolate.run(
+    () async => (await sha256.bind(File(path).openRead()).first).toString(),
+  );
+}
 
 /// Purpose: Delete a file, ignoring failure.
 /// Inputs: [file]. Returns: None. Side effects: May delete the file.

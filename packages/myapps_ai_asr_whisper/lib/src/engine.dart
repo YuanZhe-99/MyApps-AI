@@ -207,6 +207,9 @@ class WhisperCppEngine implements AsrEngine {
 
   @override
   Future<List<AsrRoute>> probe(List<ArtifactManifest> manifests) async {
+    if (!manifests.any((manifest) => manifest.backendId == adapterId)) {
+      return const [];
+    }
     final info = await runtime();
     final routes = <AsrRoute>[];
     final capabilities = AsrCapabilities(

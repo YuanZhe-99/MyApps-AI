@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:archive/archive_io.dart';
 import 'package:flutter/foundation.dart';
@@ -376,6 +377,9 @@ class ArtifactManager {
       download += (file.bytes - have).clamp(0, file.bytes);
       if (file.unpack != ArchiveKind.none) {
         unpack += file.unpackedBytes ?? file.bytes;
+        if (file.unpack == ArchiveKind.tarBz2) {
+          unpack += file.unpackedBytes ?? file.bytes;
+        }
       }
     }
     return SpaceBudget(download: download, unpack: unpack, install: 0);
@@ -611,14 +615,14 @@ class ArtifactManager {
           );
         } else {
           report(InstallProgress(InstallStage.unpacking, done, total));
-          await _unpack(file, partial, staging);
-          await partial.delete();
+          await _unpack(file, partial, staging, cancel);
         }
       }
 
       report(InstallProgress(InstallStage.verifying, done, total));
       final direct = {for (final f in installedFiles) f.path};
       await for (final entry in staging.list(recursive: true)) {
+        if (cancel.isCancelled) throw cancelledFailure();
         if (entry is! File) continue;
         final relative = p
             .relative(entry.path, from: staging.path)
@@ -667,6 +671,14 @@ class ArtifactManager {
       } catch (_) {}
 
       report(InstallProgress(InstallStage.done, total, total));
+      for (final file in files.where((f) => f.unpack != ArchiveKind.none)) {
+        try {
+          final partial = await partialFile(id, file);
+          if (await partial.exists()) await partial.delete();
+        } on FileSystemException {
+          // Publication succeeded; cache cleanup must not turn it into failure.
+        }
+      }
       return result;
     } on FileSystemException catch (error) {
       throw diskFullOr(error);
@@ -813,23 +825,51 @@ class ArtifactManager {
   }
 
   /// Purpose: Unpack a verified archive into the staging folder.
-  /// Inputs: Manifest [file], downloaded [archive], [staging].
-  /// Returns: None. Side effects: Writes contents.
-  /// Notes: Internal. The archive is given its real extension because the
-  /// unpacker chooses its decoder by name.
+  /// Inputs: Manifest [file], downloaded [archive], [staging], [cancel].
+  /// Returns: None. Side effects: Writes contents on background isolates.
+  /// Notes: Cancellation waits for the current decode phase; partials survive.
   Future<void> _unpack(
     ArtifactFile file,
     File archive,
     Directory staging,
+    DownloadCancelToken cancel,
   ) async {
-    final extension = switch (file.unpack) {
-      ArchiveKind.zip => '.zip',
-      ArchiveKind.tarBz2 => '.tar.bz2',
-      ArchiveKind.none => '',
-    };
-    final named = await archive.rename('${archive.path}$extension');
+    final source = archive.path;
+    final destination = staging.path;
+    final tar = File('$destination.tar');
     try {
-      await extractFileToDisk(named.path, staging.path);
+      if (file.unpack == ArchiveKind.tarBz2) {
+        final tarPath = tar.path;
+        await Isolate.run(() {
+          final input = InputFileStream(source);
+          final output = OutputFileStream(tarPath);
+          try {
+            if (!BZip2Decoder().decodeStream(input, output, verify: true)) {
+              throw const FormatException('Invalid BZip2 archive');
+            }
+          } finally {
+            input.closeSync();
+            output.closeSync();
+          }
+        });
+      }
+      if (cancel.isCancelled) throw cancelledFailure();
+      final inputPath = file.unpack == ArchiveKind.tarBz2 ? tar.path : source;
+      final isTar = file.unpack == ArchiveKind.tarBz2;
+      await Isolate.run(() {
+        final input = InputFileStream(inputPath);
+        try {
+          final contents = isTar
+              ? TarDecoder().decodeStream(input)
+              : ZipDecoder().decodeStream(input);
+          extractArchiveToDiskSync(contents, destination);
+        } finally {
+          input.closeSync();
+        }
+      });
+      if (cancel.isCancelled) throw cancelledFailure();
+    } on ArtifactException {
+      rethrow;
     } on FileSystemException {
       rethrow;
     } catch (error) {
@@ -838,7 +878,7 @@ class ArtifactManager {
         '${file.path}: $error',
       );
     } finally {
-      if (await named.exists()) await named.rename(archive.path);
+      if (await tar.exists()) await tar.delete();
     }
   }
 

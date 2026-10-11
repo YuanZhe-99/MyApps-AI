@@ -41,6 +41,19 @@ class LocalEngineStateStore {
   final Future<File> Function() _file;
   final DateTime Function() _clock;
   Future<void> _tail = Future.value();
+  Future<void> _nativeTail = Future.value();
+
+  /// Purpose: Serialize native work sharing this store's single crash marker.
+  /// Inputs: [work]. Returns: Its result. Side effects: Queues native work.
+  /// Notes: Errors do not block later requests; disk writes use a separate queue.
+  Future<T> runExclusive<T>(Future<T> Function() work) {
+    final result = _nativeTail.then((_) => work());
+    _nativeTail = result.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace _) {},
+    );
+    return result;
+  }
 
   /// Purpose: Path set aside on the last write, if any.
   /// Inputs: None. Returns: String or null. Side effects: None.

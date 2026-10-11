@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.1 - 2026-10-11
+
+Move archive extraction and file hashing to background isolates, retain verified
+archives for cancelled-install retries, and budget temporary tar storage. Serialize
+native checks and transcription through the engine-state execution queue. Settle
+native worker requests on termination and avoid initializing ASR runtimes when no
+matching model is installed. Native process crashes still require device testing.
+
 ## 0.6.0 - 2026-10-08
 
 Breaking: applications replace their own source routing with `AiSourceRouter` from

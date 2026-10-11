@@ -247,6 +247,14 @@ void main() {
     expect(textSimilarity('one two three four', 'one two four'), 0.75);
     expect(asrSelfTestMinSimilarity, 0.8);
   });
+
+  test('closing a worker settles pending and future callers', () async {
+    final worker = await NativeWorker.spawn(_double);
+    final pending = worker.call(1);
+    worker.close();
+    expect(await pending, isA<NativeWorkerFailure>());
+    expect(await worker.call(2), isA<NativeWorkerFailure>());
+  });
 }
 
 class _FailingDiarizer implements AsrDiarizer {
