@@ -193,28 +193,28 @@ packages:
       path: "../myapps_ai_core"
       relative: true
     source: path
-    version: "0.6.1"
+    version: "0.6.2"
   myapps_ai_llm:
     dependency: "direct main"
     description:
       path: "../myapps_ai_llm"
       relative: true
     source: path
-    version: "0.6.1"
+    version: "0.6.2"
   myapps_ai_llm_llama:
     dependency: "direct main"
     description:
       path: "../myapps_ai_llm_llama"
       relative: true
     source: path
-    version: "0.6.1"
+    version: "0.6.2"
   myapps_ai_models:
     dependency: "direct main"
     description:
       path: "../myapps_ai_models"
       relative: true
     source: path
-    version: "0.6.1"
+    version: "0.6.2"
   path:
     dependency: "direct dev"
     description:

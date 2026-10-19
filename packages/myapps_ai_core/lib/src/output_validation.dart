@@ -14,14 +14,50 @@ final _markdownMarks = RegExp(
 final _itemSplit = RegExp(r'[,，、;；/\n|]+');
 final _labelPrefix = RegExp(r'^[^:：]{0,40}[:：]\s*');
 
+// Reasoning blocks some models write before their answer: `<think>` (Qwen
+// and others), `<|think|>` and Gemma's `<|channel>thought … <channel|>`.
+final _thinkingBlock = RegExp(
+  r'<think>[\s\S]*?</think>'
+  r'|<\|think\|>[\s\S]*?</\|think\|>'
+  r'|<\|channel>thought[\s\S]*?<channel\|>',
+  caseSensitive: false,
+);
+final _thinkingClose = RegExp(
+  r'^[\s\S]*(</think>|</\|think\|>|<channel\|>)',
+  caseSensitive: false,
+);
+final _thinkingOpen = RegExp(
+  r'(<think>|<\|think\|>|<\|channel>thought)[\s\S]*$',
+  caseSensitive: false,
+);
+
+/// Purpose: Remove a model's reasoning blocks so only its answer is parsed.
+/// Inputs: `text` — a raw reply.
+/// Returns: `String` — the reply without reasoning, trimmed.
+/// Side effects: None.
+/// Notes: Removes complete `<think>…</think>`, `<|think|>…</|think|>` and
+/// `<|channel>thought…<channel|>` blocks; then everything up to a closing
+/// tag left without its opening one (a template that opened the block
+/// itself); then an opening tag that never closes, through the end — the
+/// reply was cut off while reasoning, so it holds no answer. Drafts inside
+/// reasoning often look like numbered answers, which is why this runs before
+/// any line is read.
+String stripThinking(String text) => text
+    .replaceAll(_thinkingBlock, '')
+    .replaceFirst(_thinkingClose, '')
+    .replaceFirst(_thinkingOpen, '')
+    .trim();
+
 /// Purpose: Remove code fences and Markdown decoration from a reply.
 /// Inputs: `text`.
 /// Returns: `String` — trimmed plain text.
 /// Side effects: None.
-/// Notes: Removes fences, bold and italic markers, inline code ticks, headings,
-/// bullets and list numbers. Line breaks are kept.
-String stripMarkdown(String text) =>
-    text.replaceAll(_codeFence, '').replaceAll(_markdownMarks, '').trim();
+/// Notes: Removes reasoning blocks ([stripThinking]) first, then fences,
+/// bold and italic markers, inline code ticks, headings, bullets and list
+/// numbers. Line breaks are kept.
+String stripMarkdown(String text) => stripThinking(
+  text,
+).replaceAll(_codeFence, '').replaceAll(_markdownMarks, '').trim();
 
 /// The result of reading a choice reply.
 class ChoiceParse {

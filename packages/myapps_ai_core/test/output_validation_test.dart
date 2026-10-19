@@ -49,6 +49,36 @@ void main() {
       expect(matchesScript('同一工作室', 'en'), isFalse);
     });
 
+    test('stripThinking removes reasoning before the answer', () {
+      expect(
+        stripThinking('<think>\n1: draft\n</think>\n1: Final answer.'),
+        '1: Final answer.',
+      );
+      expect(
+        stripThinking('<|think|>1: draft</|think|>1: Final.'),
+        '1: Final.',
+      );
+      expect(
+        stripThinking('<|channel>thought\n1: draft\n<channel|>1: Final.'),
+        '1: Final.',
+      );
+      // A template that opened the block itself leaves only the closing tag.
+      expect(stripThinking('1: draft\n</think>\n1: Final.'), '1: Final.');
+      // Cut off while reasoning: there is no answer.
+      expect(stripThinking('<think>\n1: draft never closed'), '');
+      expect(stripThinking('1: Answer.\n<THINK>late reasoning'), '1: Answer.');
+      expect(stripThinking('1: Plain answer.'), '1: Plain answer.');
+    });
+
+    test('stripMarkdown and parseChoiceReply skip reasoning', () {
+      expect(stripMarkdown('<think>**x**</think>**Great**'), 'Great');
+      expect(
+        parseChoiceReply('<think>horror, comedy</think>romance', options).ids,
+        ['romance'],
+      );
+      expect(cleanSentence('<|think|>no</|think|>Fine.'), 'Fine.');
+    });
+
     test('cleanSentence drops over-long output', () {
       expect(cleanSentence('**Great** pick.\n'), 'Great pick.');
       expect(cleanSentence('x' * 141), isNull);

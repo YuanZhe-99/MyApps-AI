@@ -66,6 +66,10 @@ myapps_ai_ui 导出 MyAppsAiInsightCard、AiInsightSection 和 AiInsightLabels�
 
 `parseChoiceReply` 返回校验后的唯一候选及解析有效性。`stripMarkdown`、matchesScript
 和 `cleanSentence` 保留消费者既有清理、字符比例和长度检查。领域提示词与解析留在应用。
+`stripThinking`（0.6.2）删除推理块——`<think>…</think>`、
+`<|think|>…</|think|>`、`<|channel>thought…<channel|>`——再删除缺少开标签的闭合标签之前的内容，
+最后删除从未闭合的开标签到结尾的内容。`stripMarkdown` 先调用它；按行拆分回复的应用解析器在拆分前
+对整段回复调用它，因为推理中的草稿看起来就像答案。
 
 ## 模型制品
 

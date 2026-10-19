@@ -2,7 +2,7 @@ name: myapps_ai_sources
 description: >-
   Application AI source routing: the global source choice, local llama.cpp
   models, optional online models, compute device and technical details.
-version: 0.6.1
+version: 0.6.2
 publish_to: none
 environment:
   sdk: ^3.12.0

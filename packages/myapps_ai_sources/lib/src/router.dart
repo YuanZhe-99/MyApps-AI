@@ -24,7 +24,7 @@ import 'package:myapps_ai_models/myapps_ai_models.dart';
 import 'store.dart';
 
 /// Version of the source routing, shown in technical details.
-const myappsAiSourcesVersion = '0.6.0';
+const myappsAiSourcesVersion = '0.6.2';
 
 /// Routes AI requests to the selected source.
 class AiSourceRouter extends CapabilityGenAiBackend

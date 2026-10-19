@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.2 - 2026-10-19
+
+Add `stripThinking`, which removes a model's reasoning blocks — `<think>…</think>`,
+`<|think|>…</|think|>` and Gemma's `<|channel>thought…<channel|>` — before a reply is
+read, including a closing tag left without its opening one and a block cut off before
+it closed. `stripMarkdown`, and through it `cleanSentence` and `parseChoiceReply`,
+now call it first; application parsers that read lines themselves call it on the whole
+reply. Reasoning drafts often look like numbered answers, so a reply that kept them
+could show a draft instead of the answer. The technical details report the source
+routing version as 0.6.2 (0.6.1 still reported 0.6.0).
+
 ## 0.6.1 - 2026-10-11
 
 Move archive extraction and file hashing to background isolates, retain verified

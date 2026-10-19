@@ -82,6 +82,12 @@ paths, atomic writes, fingerprints and domain parsers remain consumer-owned.
 `parseChoiceReply` returns validated unique candidates and parse validity.
 `stripMarkdown`, `matchesScript` and `cleanSentence` retain the consumers' existing
 cleaning, script ratio and length checks. Domain prompts and parsers stay in apps.
+`stripThinking` (0.6.2) removes reasoning blocks — `<think>…</think>`,
+`<|think|>…</|think|>`, `<|channel>thought…<channel|>` — then anything before a closing
+tag without its opening one, then an opening tag that never closes through the end.
+`stripMarkdown` calls it first; an app parser that splits the reply into lines calls it
+on the whole reply before splitting, because a draft inside reasoning reads like an
+answer.
 
 ## Model artifacts
 
