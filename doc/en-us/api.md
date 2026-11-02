@@ -159,6 +159,12 @@ acting silently. `MyAppsAiDiagnostics` groups untranslated lines per backend.
 `confirmClearAfterSourceChange` returns false on dismissal. `MyAppsAiManagementEntry`
 opens application-owned management routes.
 
+The skeleton belongs on a second-level page (0.6.3): the first level of an
+application's Settings keeps the switches of the features that use AI and one
+`MyAppsAiSettingsEntry` row, which pushes a `MyAppsAiSettingsPage` (app bar plus a
+scrolling body) built by its `builder`, normally the skeleton. An `onTap` replaces
+the push, so a two-pane Settings can show the same page in its detail area.
+
 ## Source routing
 
 `AiSourceRouter` (`myapps_ai_sources`) is an application's `CapabilityGenAiBackend`,

@@ -23,7 +23,7 @@ MyApps-AI 提供可复用的系统设备端文本生成与校对基础设施。�
 | `myapps_ai_asr_whisper`、`myapps_ai_asr_sherpa`、`myapps_ai_asr_apple` | 可选 ASR 后端：whisper.cpp（Whisper、Parakeet）、sherpa-onnx（Qwen3-ASR、说话人分离）和 Apple（FluidAudio、系统识别器）；原生库为预构建二进制，由构建 hook 按 URL 与 SHA-256 获取，消费者构建中从不编译 |
 | `myapps_ai_online` | 不含密钥的在线来源记录、模板、OpenAI 兼容流式 LLM 后端、在线转写客户端及在线隐私提醒模型；基于 `package:http` 的纯 Dart 包 |
 | `myapps_ai_platform` | 可选的 Android ML Kit GenAI/AICore 与 Apple Foundation Models Flutter 原生桥接及 `MethodChannelGenAiBackend` |
-| `myapps_ai_ui` | 能力状态、下载、模型偏好、诊断详情及生成内容状态 |
+| `myapps_ai_ui` | 能力状态、下载、模型偏好、诊断详情、生成内容状态及二级 AI 设置页 |
 | `myapps_ai_local_ui` | 由 `ModelManagementController` 驱动的可选本地模型管理页面；仅依赖 `myapps_ai_models` |
 | `myapps_ai_sources` | 应用来源路由：一个全局来源，路由到系统 AI、llama.cpp 模型或注入的在线模型；本地与自定义 Hugging Face 模型目录、别名、GPU 选择与失败记录，以及完整技术详情；不依赖 `myapps_ai_online` |
 | `myapps_ai_online_ui` | 可选在线来源页面：来源列表、编辑、密钥输入、主动连接测试和隐私提醒；存储、文案及 MyApps-UI 输入组件由应用注入 |

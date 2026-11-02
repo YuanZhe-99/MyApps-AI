@@ -71,6 +71,97 @@ class MyAppsAiSettingsSkeleton extends StatelessWidget {
   }
 }
 
+/// The one row the top level of an application's Settings shows for AI
+/// (0.6.3).
+///
+/// The full [MyAppsAiSettingsSkeleton] is tall, so applications put it on a
+/// second-level page and keep only this row, next to the switches of the
+/// features that use AI, on the first level.
+class MyAppsAiSettingsEntry extends StatelessWidget {
+  /// Purpose: Bind the entry row.
+  /// Inputs: `title`; `subtitle` — usually the current source or status;
+  /// `builder` — builds the page body, normally the skeleton; `pageTitle`
+  /// (defaults to `title`); `icon`; `onTap` — replaces the default push,
+  /// for example to show the page in a two-pane detail area; `selected`.
+  /// Returns: A new entry.
+  /// Side effects: None.
+  /// Notes: The body is built inside the route, so it rebuilds with whatever
+  /// state it watches; the entry itself holds no state.
+  const MyAppsAiSettingsEntry({
+    super.key,
+    required this.title,
+    required this.builder,
+    this.subtitle,
+    this.pageTitle,
+    this.icon = Icons.auto_awesome_outlined,
+    this.onTap,
+    this.selected = false,
+  });
+
+  final String title;
+  final String? subtitle;
+  final String? pageTitle;
+  final IconData icon;
+  final WidgetBuilder builder;
+  final VoidCallback? onTap;
+  final bool selected;
+
+  /// Purpose: Render the row and open the page on tap.
+  /// Inputs: context. Returns: ListTile.
+  /// Side effects: Pushes a [MyAppsAiSettingsPage] on the root navigator
+  /// unless `onTap` is supplied.
+  /// Notes: None.
+  @override
+  Widget build(BuildContext context) => ListTile(
+    leading: Icon(icon),
+    title: Text(title),
+    subtitle: subtitle == null ? null : Text(subtitle!),
+    trailing: const Icon(Icons.chevron_right),
+    selected: selected,
+    onTap:
+        onTap ??
+        () => Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute<void>(
+            builder: (context) => MyAppsAiSettingsPage(
+              title: pageTitle ?? title,
+              child: builder(context),
+            ),
+          ),
+        ),
+  );
+}
+
+/// The second-level "Settings → AI" page that hosts the skeleton (0.6.3).
+class MyAppsAiSettingsPage extends StatelessWidget {
+  /// Purpose: Bind the page.
+  /// Inputs: `title` — app bar title; `child` — the page body, normally a
+  /// [MyAppsAiSettingsSkeleton].
+  /// Returns: A new page.
+  /// Side effects: None.
+  /// Notes: A `Scaffold` with its own app bar, so it works pushed full screen
+  /// and hosted in a detail pane alike.
+  const MyAppsAiSettingsPage({
+    super.key,
+    required this.title,
+    required this.child,
+  });
+
+  final String title;
+  final Widget child;
+
+  /// Purpose: Render the app bar and a scrolling body.
+  /// Inputs: context. Returns: Scaffold. Side effects: None.
+  /// Notes: Bottom padding keeps the last row clear of the system bar.
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: Text(title)),
+    body: ListView(
+      padding: const EdgeInsets.only(bottom: 24),
+      children: [child],
+    ),
+  );
+}
+
 /// Section identifiers for optional headings.
 enum MyAppsAiSettingsSection {
   source,

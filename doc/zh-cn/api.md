@@ -125,6 +125,11 @@ Whisper 和 Sherpa 在没有匹配的已安装清单时不初始化原生库。
 信息。`confirmClearAfterSourceChange` 关闭对话框时返回 false。`MyAppsAiManagementEntry`
 打开应用自有的管理路由。
 
+骨架应放在二级页面（0.6.3）：应用设置的第一级只保留使用 AI 的功能开关和一行
+`MyAppsAiSettingsEntry`，点击后推入由其 `builder` 构建（通常就是骨架）的
+`MyAppsAiSettingsPage`（应用栏加可滚动内容）。提供 `onTap` 时不再推入页面，双栏设置可借此
+在详情区显示同一页面。
+
 ## 来源路由
 
 `AiSourceRouter`（`myapps_ai_sources`）同时是应用的 `CapabilityGenAiBackend`、

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.3 - 2026-11-02
+
+Add `MyAppsAiSettingsEntry` and `MyAppsAiSettingsPage` to `myapps_ai_ui`, so the
+AI settings move off the first level of an application's Settings: the first level
+keeps one entry row, and the full `MyAppsAiSettingsSkeleton` opens on its own page.
+An `onTap` lets a two-pane Settings host the page in its detail area. Applications
+adopt it when they next update; nothing else changes. The technical details report
+the source routing version as 0.6.3.
+
 ## 0.6.2 - 2026-10-19
 
 Add `stripThinking`, which removes a model's reasoning blocks — `<think>…</think>`,

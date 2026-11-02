@@ -185,4 +185,42 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('status: available'), findsOneWidget);
   });
+
+  testWidgets('settings entry opens the AI page with its body', (tester) async {
+    await tester.pumpWidget(
+      _app(
+        MyAppsAiSettingsEntry(
+          title: 'AI',
+          subtitle: 'Ready',
+          pageTitle: 'AI settings',
+          builder: (_) => const Text('body'),
+        ),
+      ),
+    );
+    expect(find.text('Ready'), findsOneWidget);
+    expect(find.text('body'), findsNothing);
+    await tester.tap(find.text('AI'));
+    await tester.pumpAndSettle();
+    expect(find.text('AI settings'), findsOneWidget);
+    expect(find.text('body'), findsOneWidget);
+  });
+
+  testWidgets('settings entry uses a supplied onTap instead of pushing', (
+    tester,
+  ) async {
+    var taps = 0;
+    await tester.pumpWidget(
+      _app(
+        MyAppsAiSettingsEntry(
+          title: 'AI',
+          builder: (_) => const Text('body'),
+          onTap: () => taps++,
+        ),
+      ),
+    );
+    await tester.tap(find.text('AI'));
+    await tester.pumpAndSettle();
+    expect(taps, 1);
+    expect(find.text('body'), findsNothing);
+  });
 }
