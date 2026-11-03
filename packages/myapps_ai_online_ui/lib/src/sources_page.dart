@@ -16,7 +16,9 @@ import 'editor.dart';
 import 'provider_icon.dart';
 import 'template_picker.dart';
 
-/// Width at which the editor opens beside the list.
+/// Width of the page's own box at which the editor opens beside the list.
+/// Measured on the page, not the window: hosted in another app's detail
+/// pane, a wide window still leaves this page narrow (0.6.4).
 const _twoPaneWidth = 840.0;
 
 /// Online sources page.
@@ -60,6 +62,9 @@ class _SourcesState extends State<MyAppsOnlineSourcesPage> {
   /// The record open in the second pane, and whether it is new.
   (OnlineProvider, bool)? _open;
 
+  /// Whether the last layout had room for two panes; set while laying out.
+  bool _wide = false;
+
   @override
   void initState() {
     super.initState();
@@ -85,9 +90,10 @@ class _SourcesState extends State<MyAppsOnlineSourcesPage> {
 
   /// Purpose: Open [provider] in the pane or as a page.
   /// Inputs: [provider], [isNew]. Returns: Completion.
-  /// Side effects: Navigation or setState. Notes: None.
+  /// Side effects: Navigation or setState. Notes: Follows the layout the
+  /// page last built, so it agrees with what is on screen.
   Future<void> _edit(OnlineProvider provider, {bool isNew = false}) async {
-    if (MediaQuery.sizeOf(context).width >= _twoPaneWidth) {
+    if (_wide) {
       setState(() => _open = (provider, isNew));
       return;
     }
@@ -181,10 +187,10 @@ class _SourcesState extends State<MyAppsOnlineSourcesPage> {
   }
 
   /// Purpose: Build the page. Inputs: [context]. Returns: Scaffold.
-  /// Side effects: None. Notes: Two panes at [_twoPaneWidth] and wider.
+  /// Side effects: Records [_wide]. Notes: Two panes when the page's own
+  /// width is [_twoPaneWidth] or more.
   @override
   Widget build(BuildContext context) {
-    final wide = MediaQuery.sizeOf(context).width >= _twoPaneWidth;
     final open = _open;
     return Scaffold(
       appBar: AppBar(
@@ -197,29 +203,34 @@ class _SourcesState extends State<MyAppsOnlineSourcesPage> {
           ),
         ],
       ),
-      body: !wide
-          ? _list(context)
-          : Row(
-              children: [
-                SizedBox(width: 360, child: _list(context)),
-                const VerticalDivider(width: 1),
-                Expanded(
-                  child: open == null
-                      ? Center(child: Text(widget.labels.empty))
-                      : MyAppsOnlineSourceEditor(
-                          key: ValueKey(open.$1.id),
-                          controller: widget.controller,
-                          provider: open.$1,
-                          isNew: open.$2,
-                          labels: widget.labels,
-                          fields: widget.fields,
-                          footer: widget.editorFooter,
-                          bottomPadding: widget.bottomPadding,
-                          onDone: () => setState(() => _open = null),
-                        ),
-                ),
-              ],
-            ),
+      body: LayoutBuilder(
+        builder: (context, box) {
+          _wide = box.maxWidth >= _twoPaneWidth;
+          return !_wide
+              ? _list(context)
+              : Row(
+                  children: [
+                    SizedBox(width: 360, child: _list(context)),
+                    const VerticalDivider(width: 1),
+                    Expanded(
+                      child: open == null
+                          ? Center(child: Text(widget.labels.empty))
+                          : MyAppsOnlineSourceEditor(
+                              key: ValueKey(open.$1.id),
+                              controller: widget.controller,
+                              provider: open.$1,
+                              isNew: open.$2,
+                              labels: widget.labels,
+                              fields: widget.fields,
+                              footer: widget.editorFooter,
+                              bottomPadding: widget.bottomPadding,
+                              onDone: () => setState(() => _open = null),
+                            ),
+                    ),
+                  ],
+                );
+        },
+      ),
     );
   }
 }

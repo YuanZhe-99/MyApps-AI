@@ -321,7 +321,9 @@ dismissing saves nothing. Removal is confirmed first.
 
 Since 0.6.0 the list shows each source with its icon (LobeHub Icons, MIT, bundled as
 monochrome SVG through `flutter_svg`; initials otherwise) and its models beneath, and
-on windows 840 wide or more opens the editor beside the list. Adding opens a
+opens the editor beside the list when the page itself is 840 wide or more. Since 0.6.4 that
+width is the page's own box, not the window, so the page stays one pane inside another
+application's detail pane on a wide window. Adding opens a
 searchable template grid (`showOnlineTemplatePicker`). The editor offers an endpoint
 choice, documentation, the models list with rename and remove, "Fetch models" —
 after the privacy notice, with the catalog offered when the source cannot list them

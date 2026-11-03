@@ -220,6 +220,48 @@ void main() {
     expect(find.text('api.openai.com · Ready'), findsOneWidget);
   });
 
+  testWidgets('two panes follow the page width, not the window', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final c = _FakeController([_openAi()]);
+
+    // A wide window with the page in a narrow detail pane: one pane, and
+    // opening a source pushes the editor.
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Row(
+          children: [
+            const SizedBox(width: 700),
+            Expanded(child: (_page(c) as MaterialApp).home!),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('No sources'), findsNothing);
+    await tester.tap(find.text('OpenAI'));
+    await tester.pumpAndSettle();
+    expect(find.text('Edit'), findsOneWidget);
+
+    // The same window with the page at full width: the editor sits beside
+    // the list.
+    await tester.pumpWidget(
+      KeyedSubtree(
+        key: UniqueKey(),
+        child: _page(_FakeController([_openAi()])),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('No sources'), findsOneWidget);
+    await tester.tap(find.text('OpenAI'));
+    await tester.pumpAndSettle();
+    expect(find.text('Edit'), findsNothing);
+    expect(find.text('Online'), findsOneWidget);
+  });
+
   testWidgets('adding uses the seeded id once, then a fresh id', (
     tester,
   ) async {

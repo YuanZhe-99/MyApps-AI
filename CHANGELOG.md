@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.4 - 2026-11-02
+
+`MyAppsOnlineSourcesPage` decides between one and two panes from its own width
+(`LayoutBuilder`) instead of the window's. Hosted in an application's Settings
+detail pane on a wide window, it used to open the editor in a strip a few dozen
+pixels wide beside the list; it now stays one pane there and pushes the editor.
+
 ## 0.6.3 - 2026-11-02
 
 Add `MyAppsAiSettingsEntry` and `MyAppsAiSettingsPage` to `myapps_ai_ui`, so the
